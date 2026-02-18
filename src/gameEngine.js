@@ -201,3 +201,4 @@ window.onload = async () => {
 window.showMainMenu = () => {
   showStartScreen(true, startGame);
 };
+  
