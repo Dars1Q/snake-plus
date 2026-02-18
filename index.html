@@ -8,8 +8,8 @@
   <meta name="format-detection" content="telephone=no" />
   <title>Snake+ Telegram Mini App</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="styles.css?v=36" />
-  <script type="module" src="src/gameEngine.js?v=36"></script>
+  <link rel="stylesheet" href="styles.css?v=37" />
+  <script type="module" src="src/gameEngine.js?v=37"></script>
   
   <!-- Sticky App Mode - prevents swipe-down to close on iOS -->
   <style>
@@ -54,13 +54,13 @@
   </div>
   
   <!-- Mobile Control Buttons -->
-  <button class="controls-toggle" id="controls-toggle-btn" title="Показать/скрыть кнопки">🎮</button>
-  <div class="mobile-controls" id="mobile-controls">
-    <div class="dpad">
-      <div class="dpad-btn dpad-left" data-direction="left">◀</div>
-      <div class="dpad-btn dpad-up" data-direction="up">▲</div>
-      <div class="dpad-btn dpad-down" data-direction="down">▼</div>
-      <div class="dpad-btn dpad-right" data-direction="right">▶</div>
+  <button class="controls-toggle" id="controls-toggle-btn" title="Показать/скрыть кнопки" style="position:fixed;top:10px;right:10px;z-index:1001;width:44px;height:44px;border-radius:50%;background:rgba(46,204,64,0.3);border:2px solid rgba(46,204,64,0.5);color:#2ecc40;font-size:1.2rem;display:flex;justify-content:center;align-items:center;cursor:pointer;">🎮</button>
+  <div class="mobile-controls" id="mobile-controls" style="display:grid;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:1000;pointer-events:auto;">
+    <div class="dpad" style="display:grid;grid-template-columns:repeat(4,48px);grid-template-rows:repeat(2,48px);gap:4px;pointer-events:auto;">
+      <div class="dpad-btn dpad-left" data-direction="left" style="width:48px;height:48px;border-radius:8px;background:rgba(46,204,64,0.15);border:1px solid rgba(46,204,64,0.3);color:rgba(46,204,64,0.8);font-size:1rem;font-weight:bold;display:flex;justify-content:center;align-items:center;cursor:pointer;pointer-events:auto;">◀</div>
+      <div class="dpad-btn dpad-up" data-direction="up" style="grid-column:2;grid-row:1;width:48px;height:48px;border-radius:8px;background:rgba(46,204,64,0.15);border:1px solid rgba(46,204,64,0.3);color:rgba(46,204,64,0.8);font-size:1rem;font-weight:bold;display:flex;justify-content:center;align-items:center;cursor:pointer;pointer-events:auto;">▲</div>
+      <div class="dpad-btn dpad-down" data-direction="down" style="grid-column:3;grid-row:2;width:48px;height:48px;border-radius:8px;background:rgba(46,204,64,0.15);border:1px solid rgba(46,204,64,0.3);color:rgba(46,204,64,0.8);font-size:1rem;font-weight:bold;display:flex;justify-content:center;align-items:center;cursor:pointer;pointer-events:auto;">▼</div>
+      <div class="dpad-btn dpad-right" data-direction="right" style="grid-column:4;grid-row:1;width:48px;height:48px;border-radius:8px;background:rgba(46,204,64,0.15);border:1px solid rgba(46,204,64,0.3);color:rgba(46,204,64,0.8);font-size:1rem;font-weight:bold;display:flex;justify-content:center;align-items:center;cursor:pointer;pointer-events:auto;">▶</div>
     </div>
   </div>
   
