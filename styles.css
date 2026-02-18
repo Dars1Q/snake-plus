@@ -580,11 +580,12 @@ label {
 
 /* ============================================
    Mobile Control Buttons (D-Pad)
+   Compact arrows - 3 on left, 1 on right
    ============================================ */
 .mobile-controls {
   display: grid;
   position: fixed;
-  bottom: 20px;
+  bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
@@ -596,22 +597,23 @@ label {
 
 .dpad {
   display: grid;
-  grid-template-columns: repeat(3, 60px);
-  grid-template-rows: repeat(2, 60px);
-  gap: 8px;
+  grid-template-columns: repeat(4, 48px);
+  grid-template-rows: repeat(2, 48px);
+  gap: 4px;
   justify-items: center;
   align-items: center;
   pointer-events: auto;
 }
 
 .dpad-btn {
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(46, 204, 64, 0.3), rgba(46, 204, 64, 0.1));
-  border: 2px solid rgba(46, 204, 64, 0.5);
-  color: #2ecc40;
-  font-size: 1.5rem;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: rgba(46, 204, 64, 0.15);
+  border: 1px solid rgba(46, 204, 64, 0.3);
+  color: rgba(46, 204, 64, 0.8);
+  font-size: 1rem;
+  font-weight: bold;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -619,18 +621,20 @@ label {
   transition: all 0.1s ease;
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  pointer-events: auto;
 }
 
 .dpad-btn:active, .dpad-btn.active {
-  background: rgba(46, 204, 64, 0.6);
-  border-color: #2ecc40;
-  transform: scale(0.95);
-  box-shadow: 0 0 20px rgba(46, 204, 64, 0.5);
+  background: rgba(46, 204, 64, 0.4);
+  border-color: rgba(46, 204, 64, 0.6);
+  color: rgba(46, 204, 64, 1);
+  transform: scale(0.92);
+  box-shadow: 0 0 12px rgba(46, 204, 64, 0.4);
 }
 
-/* Button positions */
+/* Button positions - compact layout */
 .dpad-up {
   grid-column: 2;
   grid-row: 1;
@@ -642,13 +646,13 @@ label {
 }
 
 .dpad-down {
-  grid-column: 2;
+  grid-column: 3;
   grid-row: 2;
 }
 
 .dpad-right {
-  grid-column: 3;
-  grid-row: 2;
+  grid-column: 4;
+  grid-row: 1;
 }
 
 /* Toggle button for controls visibility */
