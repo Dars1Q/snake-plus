@@ -1,0 +1,104 @@
+TECHNICAL SPECIFICATION (MVP)
+
+Project: Telegram Mini App Game — Snake+
+
+---
+
+1. GOAL
+   Create a lightweight addictive browser mini-game inside Telegram WebApp with high replayability and scalable architecture for future expansion.
+
+---
+
+2. PLATFORM
+   Client: Telegram WebApp (HTML5)
+   Language: JavaScript or TypeScript
+   Rendering: Canvas API
+   Server: none (MVP stage)
+   Hosting: HTTPS static hosting
+
+---
+
+3. CORE GAMEPLAY
+
+* Snake moves on grid field
+* Player controls direction
+* Food increases length
+* Collision with body = game over
+* Score counter
+* Restart button
+
+---
+
+4. EXTENDED MVP MECHANICS
+
+* Combo system: fast food chain gives multiplier
+* Random bonus food with effects
+* Skin unlock system
+* Leaderboard using local storage
+* Ice tiles with sliding physics
+
+---
+
+5. BALANCE PARAMETERS
+   Base speed: 5 cells/sec
+   Speed increase: every 5 food
+   Combo window: 2 seconds
+   Rare food spawn chance: 12%
+   Ice tile spawn chance: 8%
+
+---
+
+6. ARCHITECTURE STRUCTURE
+   /project
+   /src
+   gameEngine.js
+   renderer.js
+   controls.js
+   mechanics.js
+   ui.js
+   index.html
+   styles.css
+
+---
+
+7. LOGIC MODULES
+
+* Game Loop — tick updates
+* Collision System
+* Spawn Manager
+* Score Manager
+* Difficulty Scaler
+
+---
+
+8. AI AGENT TASKS
+
+* Generate boilerplate project
+* Implement game loop
+* Write spawn logic
+* Balance parameters
+* Optimize performance
+* Refactor architecture
+
+---
+
+9. PERFORMANCE TARGETS
+
+* 60 FPS stable
+* Load time < 2 sec
+* Bundle size < 1.5 MB
+* Smooth mobile controls
+
+---
+
+10. FUTURE EXPANSION HOOKS
+
+* Online leaderboard
+* Multiplayer snakes
+* Daily challenges
+* Cosmetic skins shop
+* Procedural maps
+
+---
+
+END OF SPECIFICATION
