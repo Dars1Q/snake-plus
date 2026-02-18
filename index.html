@@ -8,8 +8,20 @@
   <meta name="format-detection" content="telephone=no" />
   <title>Snake+ Telegram Mini App</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="styles.css?v=37" />
-  <script type="module" src="src/gameEngine.js?v=37"></script>
+  <link rel="stylesheet" href="styles.css" id="css-link" />
+  <script type="module" src="src/gameEngine.js" id="game-script"></script>
+  
+  <script>
+    // Cache busting - force reload new versions
+    (function() {
+      const VERSION = '37';
+      const cssLink = document.getElementById('css-link');
+      const gameScript = document.getElementById('game-script');
+      
+      if (cssLink) cssLink.href = `styles.css?v=${VERSION}`;
+      if (gameScript) gameScript.src = `src/gameEngine.js?v=${VERSION}`;
+    })();
+  </script>
   
   <!-- Sticky App Mode - prevents swipe-down to close on iOS -->
   <style>
