@@ -8,8 +8,8 @@
   <meta name="format-detection" content="telephone=no" />
   <title>Snake+ Telegram Mini App</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="styles.css?v=30" />
-  <script type="module" src="src/gameEngine.js?v=30"></script>
+  <link rel="stylesheet" href="styles.css?v=31" />
+  <script type="module" src="src/gameEngine.js?v=31"></script>
   
   <!-- Sticky App Mode - prevents swipe-down to close on iOS -->
   <style>
@@ -53,6 +53,17 @@
     </div>
   </div>
   
+  <!-- Mobile Control Buttons -->
+  <button class="controls-toggle" id="controls-toggle-btn" title="Показать/скрыть кнопки">🎮</button>
+  <div class="mobile-controls" id="mobile-controls">
+    <div class="dpad">
+      <div class="dpad-btn dpad-up" data-direction="up">⬆️</div>
+      <div class="dpad-btn dpad-left" data-direction="left">⬅️</div>
+      <div class="dpad-btn dpad-down" data-direction="down">⬇️</div>
+      <div class="dpad-btn dpad-right" data-direction="right">➡️</div>
+    </div>
+  </div>
+  
   <script>
     // Enable Sticky App Mode on iOS/Android to prevent swipe-down close
     (function() {
@@ -82,6 +93,32 @@
       } else {
         window.addEventListener('DOMContentLoaded', enableStickyApp);
       }
+    })();
+    
+    // Mobile controls visibility toggle
+    (function() {
+      const toggleBtn = document.getElementById('controls-toggle-btn');
+      const controls = document.getElementById('mobile-controls');
+      
+      if (!toggleBtn || !controls) return;
+      
+      // Load saved state
+      const savedState = localStorage.getItem('snakeplus_controls_visible');
+      if (savedState === 'false') {
+        controls.classList.add('hidden');
+      }
+      
+      toggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        controls.classList.toggle('hidden');
+        localStorage.setItem('snakeplus_controls_visible', !controls.classList.contains('hidden'));
+      });
+      
+      // Prevent default touch behavior on controls
+      controls.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+      controls.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+      controls.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
     })();
   </script>
 </body>

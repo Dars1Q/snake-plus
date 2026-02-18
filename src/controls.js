@@ -12,7 +12,41 @@ export function setupControls(state, onDirectionChange) {
     }
   };
 
-  // Touch controls for mobile
+  // ============================================
+  // Mobile D-Pad Button Controls
+  // ============================================
+  const dpadButtons = document.querySelectorAll('.dpad-btn');
+  
+  dpadButtons.forEach(btn => {
+    const direction = btn.getAttribute('data-direction');
+    
+    // Handle touch
+    const handleTouch = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onDirectionChange(direction);
+      
+      // Visual feedback
+      btn.classList.add('active');
+      setTimeout(() => btn.classList.remove('active'), 150);
+    };
+    
+    // Touch events
+    btn.addEventListener('touchstart', handleTouch, { passive: false });
+    
+    // Mouse events for desktop testing
+    btn.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      handleTouch(e);
+    });
+    
+    // Prevent context menu on right-click
+    btn.addEventListener('contextmenu', (e) => e.preventDefault());
+  });
+
+  // ============================================
+  // Swipe Controls (with aggressive prevention)
+  // ============================================
   let startX, startY;
   let touchStartTime;
   let touchArea = null;
@@ -27,7 +61,7 @@ export function setupControls(state, onDirectionChange) {
       touchArea = e.target.closest('#game-canvas') || e.target.closest('#game-container') || document.body;
     }
     // Prevent ALL default touch behavior including iOS swipe-to-close
-    if (!e.target.closest('button') && !e.target.closest('input') && !e.target.closest('select')) {
+    if (!e.target.closest('button') && !e.target.closest('input') && !e.target.closest('select') && !e.target.closest('.dpad-btn')) {
       e.preventDefault();
       e.stopPropagation();
     }

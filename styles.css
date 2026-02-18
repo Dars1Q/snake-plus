@@ -577,3 +577,120 @@ label {
     gap: 8px;
   }
 }
+
+/* ============================================
+   Mobile Control Buttons (D-Pad)
+   ============================================ */
+.mobile-controls {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+/* Show on mobile devices */
+@media (max-width: 768px) {
+  .mobile-controls {
+    display: grid;
+  }
+}
+
+.dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 60px);
+  grid-template-rows: repeat(2, 60px);
+  gap: 8px;
+  justify-items: center;
+  align-items: center;
+}
+
+.dpad-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(46, 204, 64, 0.3), rgba(46, 204, 64, 0.1));
+  border: 2px solid rgba(46, 204, 64, 0.5);
+  color: #2ecc40;
+  font-size: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.dpad-btn:active, .dpad-btn.active {
+  background: rgba(46, 204, 64, 0.6);
+  border-color: #2ecc40;
+  transform: scale(0.95);
+  box-shadow: 0 0 20px rgba(46, 204, 64, 0.5);
+}
+
+/* Button positions */
+.dpad-up {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.dpad-left {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.dpad-down {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.dpad-right {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+/* Toggle button for controls visibility */
+.controls-toggle {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 1001;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(46, 204, 64, 0.3);
+  border: 2px solid rgba(46, 204, 64, 0.5);
+  color: #2ecc40;
+  font-size: 1.2rem;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+@media (max-width: 768px) {
+  .controls-toggle {
+    display: flex;
+  }
+}
+
+.controls-toggle:active {
+  background: rgba(46, 204, 64, 0.6);
+  transform: scale(0.95);
+}
+
+/* Hide controls when disabled */
+.mobile-controls.hidden {
+  display: none !important;
+}
