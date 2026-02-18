@@ -36,10 +36,14 @@ app.post('/api/score', (req, res) => {
     }
 
     const db = getDb();
+    
+    // Convert telegramUser object to JSON string for SQLite
+    const telegramUserJson = telegramUser ? JSON.stringify(telegramUser) : null;
+    
     db.run(`
       INSERT INTO scores (user_id, username, telegram_user, score, rank, language, created_at)
       VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
-    `, [userId, username || 'Anonymous', telegramUser || null, score, rank || 'Bronze I', language || 'en']);
+    `, [userId, username || 'Anonymous', telegramUserJson, score, rank || 'Bronze I', language || 'en']);
 
     // Update global stats
     updateGlobalStats(score, userId);
