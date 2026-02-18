@@ -117,14 +117,43 @@ export async function getUserSkins() {
   return apiRequest(`/user/${getUserId()}/skins`);
 }
 
-// Update user stars
+// Update user stars - with debounce to prevent spam
+let starsUpdateTimeout = null;
+let pendingStars = null;
+
 export async function updateStars(stars, totalStars) {
-  return apiRequest(`/user/${getUserId()}/stars`, {
-    method: 'POST',
-    body: JSON.stringify({
-      stars,
-      totalStars,
-    }),
+  // Store pending update
+  pendingStars = { stars, totalStars };
+  
+  // Clear existing timeout
+  if (starsUpdateTimeout) {
+    clearTimeout(starsUpdateTimeout);
+  }
+  
+  // Debounce - wait 2 seconds before sending
+  return new Promise((resolve) => {
+    starsUpdateTimeout = setTimeout(async () => {
+      if (!pendingStars) {
+        resolve({ success: false, message: 'Cancelled' });
+        return;
+      }
+      
+      try {
+        const result = await apiRequest(`/user/${getUserId()}/stars`, {
+          method: 'POST',
+          body: JSON.stringify({
+            stars: pendingStars.stars,
+            totalStars: pendingStars.totalStars,
+          }),
+        });
+        pendingStars = null;
+        resolve(result);
+      } catch (error) {
+        console.error('Failed to update stars (debounced):', error);
+        pendingStars = null;
+        resolve({ success: false, error: error.message });
+      }
+    }, 2000);
   });
 }
 
