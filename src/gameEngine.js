@@ -5,7 +5,7 @@ import { setupControls } from './controls.js';
 import { updateMechanics, getInitialState, getRank, BOOSTERS, incrementGamesPlayed, updateGameStats, checkAchievements } from './mechanics.js';
 import { updateUI, showGameOver, showStartScreen, setGameState, loadTheme } from './ui.js';
 import { soundManager, playEatSound, playIceBreakSound, playCrashSound } from './audio.js';
-import { saveScore, updateStars, isServerAvailable } from './api.js';
+import { saveScore, isServerAvailable } from './api.js';
 import { ONLINE_MODE } from './config.js';
 
 // Get Telegram user data
@@ -165,7 +165,7 @@ function gameLoop(now) {
             saveScore(gameState.score, rank.name, tgUser)
               .then(() => console.log('Score saved successfully!'))
               .catch(err => console.error('Failed to save score:', err));
-            // Save stars locally only
+            // Save stars locally
             localStorage.setItem('snakeplus_stars', String(Math.floor(gameState.stars)));
           } else {
             console.log('Not saving - ONLINE_MODE:', ONLINE_MODE, 'serverAvailable:', serverAvailable);
