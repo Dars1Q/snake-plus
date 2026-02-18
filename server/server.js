@@ -9,8 +9,13 @@ const { initDatabase, getPool, updateGlobalStats } = require('./database');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(cors());
+// Middleware - CORS должен быть первым!
+app.use(cors({
+  origin: ['https://dars1q.github.io', 'http://localhost:8080', 'http://127.0.0.1:8080'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../')));
 
@@ -87,21 +92,13 @@ app.get('/api/leaderboard', async (req, res) => {
 
     // Get unique users with their best scores
     const result = await pool.query(`
-      SELECT DISTINCT ON (s1.user_id)
-        s1.user_id,
-        s1.username,
-        s1.telegram_user,
-        s1.score,
-        s1.rank,
-        s1.language,
-        s1.created_at
+      SELECT s1.user_id, s1.username, s1.telegram_user, s1.score, s1.rank, s1.language, s1.created_at
       FROM scores s1
       INNER JOIN (
         SELECT user_id, MAX(score) as max_score
         FROM scores
         GROUP BY user_id
       ) s2 ON s1.user_id = s2.user_id AND s1.score = s2.max_score
-      ORDER BY s1.user_id, s1.score DESC
       ORDER BY s1.score DESC
       LIMIT $1
     `, [limit]);
