@@ -27,11 +27,10 @@ function initTelegram() {
   if (window.Telegram && window.Telegram.WebApp) {
     const tg = window.Telegram.WebApp;
     
-    // CRITICAL: Disable all Telegram swipe gestures
-    tg.disableVerticalSwipes?.();
-    
-    // Ready and expand
+    // Ready first
     tg.ready();
+    
+    // Expand to full height
     tg.expand();
     
     // Set colors to match our theme
@@ -39,10 +38,23 @@ function initTelegram() {
     tg.setHeaderColor(bgColor);
     tg.setBackgroundColor(bgColor);
     
-    // CRITICAL: Tell Telegram this is a game - may help with gestures
+    // CRITICAL: Disable vertical swipes (iOS/Android)
     try {
-      tg.MainButton.show();
-      tg.MainButton.hide();
+      if (tg.disableVerticalSwipes) {
+        tg.disableVerticalSwipes();
+        console.log('Vertical swipes disabled');
+      }
+    } catch(e) {}
+    
+    // CRITICAL: Enable sticky app mode (Telegram 7.7+)
+    // This prevents swipe-down from closing the app
+    try {
+      if (tg.platform !== 'web' && tg.platform !== 'weba' && tg.platform !== 'webk' && tg.platform !== 'tdesktop') {
+        // Apply sticky app class
+        document.documentElement.classList.add('sticky-app');
+        document.body.classList.add('sticky-app');
+        console.log('Sticky App Mode enabled for platform:', tg.platform);
+      }
     } catch(e) {}
 
     // Apply Telegram theme colors

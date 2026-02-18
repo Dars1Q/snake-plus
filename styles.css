@@ -76,6 +76,23 @@ body {
   -webkit-touch-action: none;
 }
 
+/* Sticky App wrapper - main container for Telegram */
+#sticky-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+}
+
+#sticky-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100%;
+  width: 100%;
+  padding: 8px;
+}
+
 #game-container {
   background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-card) 100%);
   border-radius: 12px;
