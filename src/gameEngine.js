@@ -165,10 +165,12 @@ function gameLoop(now) {
             saveScore(gameState.score, rank.name, tgUser)
               .then(() => console.log('Score saved successfully!'))
               .catch(err => console.error('Failed to save score:', err));
-            // Save stars locally only for now
+            // Save stars locally only
             localStorage.setItem('snakeplus_stars', String(Math.floor(gameState.stars)));
           } else {
             console.log('Not saving - ONLINE_MODE:', ONLINE_MODE, 'serverAvailable:', serverAvailable);
+            // Still save stars locally
+            localStorage.setItem('snakeplus_stars', String(Math.floor(gameState.stars)));
           }
           
           // Pass new achievements to showGameOver
