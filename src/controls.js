@@ -22,33 +22,31 @@ export function setupControls(state, onDirectionChange) {
       startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;
       touchStartTime = Date.now();
-      
+
       // Find game area
       touchArea = e.target.closest('#game-canvas') || e.target.closest('#game-container') || document.body;
-      
-      // Prevent default for all touches in game
-      if (touchArea.id !== 'ui' && !e.target.closest('button') && !e.target.closest('select')) {
-        e.preventDefault();
-      }
-    }
-  };
-  
-  window.ontouchmove = (e) => {
-    // Always prevent scrolling when touching game area
-    const target = e.target.closest('#game-canvas') || e.target.closest('#game-container');
-    if (target) {
+
+      // Prevent default for all touches in game - CRITICAL for iOS/Telegram
       e.preventDefault();
     }
   };
-  
+
+  window.ontouchmove = (e) => {
+    // ALWAYS prevent scrolling/swiping on iOS - prevents Telegram close gesture
+    e.preventDefault();
+  };
+
   window.ontouchend = (e) => {
+    // Prevent default for all touchend events to stop iOS swipe gestures
+    e.preventDefault();
+    
     if (e.changedTouches.length === 1) {
       const endX = e.changedTouches[0].clientX;
       const endY = e.changedTouches[0].clientY;
       const dx = endX - startX;
       const dy = endY - startY;
       const touchDuration = Date.now() - touchStartTime;
-      
+
       // Only register swipe if it's quick (not a long press)
       if (touchDuration < 500) {
         // Check if swipe is mostly horizontal or vertical
@@ -56,14 +54,11 @@ export function setupControls(state, onDirectionChange) {
           // Horizontal swipe
           if (Math.abs(dx) > 30) {
             onDirectionChange(dx > 0 ? 'right' : 'left');
-            e.preventDefault();
           }
         } else {
           // Vertical swipe
           if (Math.abs(dy) > 30) {
             onDirectionChange(dy > 0 ? 'down' : 'up');
-            // CRITICAL: Always prevent default on vertical swipe to stop Telegram close
-            e.preventDefault();
           }
         }
       }

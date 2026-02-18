@@ -518,10 +518,38 @@ async function showGameOver(score, restartCallback, newAchievements = []) {
   // Share button - Telegram integration
   const shareBtn = document.getElementById('share-btn');
   if (shareBtn) {
-    shareBtn.onclick = () => {
-      const shareMessage = `🐍 Snake+\n\n🏆 Score: ${score}\n🏅 Rank: ${rank.name}\n\nCan you beat my score? 🎮`;
+    shareBtn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       
-      // Always use clipboard (works everywhere)
+      const shareMessage = `🐍 Snake+\n\n🏆 Score: ${score}\n🏅 Rank: ${rank.name}\n\nCan you beat my score? 🎮`;
+
+      // Try Telegram WebApp share methods
+      if (window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
+        
+        // Method 1: shareToStory (Telegram 10.0+) - share as story
+        if (tg.shareToStory) {
+          tg.shareToStory(shareMessage);
+          return;
+        }
+        
+        // Method 2: switchInlineQuery - requires inline bot setup
+        if (tg.switchInlineQuery) {
+          tg.switchInlineQuery(shareMessage, ['users', 'groups', 'channels']);
+          return;
+        }
+        
+        // Method 3: openTelegramLink - open share dialog
+        if (tg.openTelegramLink) {
+          // Create a share URL (works in some contexts)
+          const shareUrl = `https://t.me/share/url?url=${encodeURIComponent('https://t.me/myRetroGameBot')}&text=${encodeURIComponent(shareMessage)}`;
+          tg.openTelegramLink(shareUrl);
+          return;
+        }
+      }
+      
+      // Fallback: copy to clipboard with toast notification
       copyToClipboard(shareMessage);
     };
   }
@@ -532,21 +560,48 @@ async function showGameOver(score, restartCallback, newAchievements = []) {
 // Helper function to copy to clipboard with visual feedback
 function copyToClipboard(text) {
   navigator.clipboard.writeText(text).then(() => {
-    // Show success message
-    const btn = document.getElementById('share-btn');
-    if (btn) {
-      const originalText = btn.innerHTML;
-      btn.innerHTML = '✅ Copied!';
-      btn.style.background = '#2ecc40';
-      setTimeout(() => {
-        btn.innerHTML = originalText;
-        btn.style.background = 'linear-gradient(90deg, #0088cc 0%, #0066aa 100%)';
-      }, 2000);
-    }
+    // Show toast notification
+    showToast('✅ Скопировано в буфер!\nТеперь вставьте в чат (Ctrl+V / долгий тап)');
   }).catch(() => {
     // Final fallback - show alert
-    alert('📋 Copy this:\n\n' + text);
+    alert('📋 Скопируйте текст:\n\n' + text);
   });
+}
+
+// Show toast notification
+function showToast(message, duration = 3000) {
+  // Remove existing toast if any
+  const existing = document.getElementById('toast-notification');
+  if (existing) existing.remove();
+
+  const toast = document.createElement('div');
+  toast.id = 'toast-notification';
+  toast.innerHTML = message.replace('\n', '<br>');
+  toast.style.cssText = `
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(20, 22, 24, 0.95);
+    border: 2px solid #2ecc40;
+    border-radius: 12px;
+    padding: 16px 24px;
+    color: #fff;
+    font-size: 0.95rem;
+    text-align: center;
+    z-index: 10000;
+    box-shadow: 0 4px 20px rgba(46, 204, 64, 0.4);
+    animation: slideUp 0.3s ease-out;
+    max-width: 80%;
+  `;
+
+  document.body.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
 }
 
 async function updateLeaderboard(newScore) {
