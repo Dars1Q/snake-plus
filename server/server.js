@@ -4,7 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const crypto = require('crypto');
 const path = require('path');
-const { getDb, initDatabase, updateGlobalStats } = require('./database');
+const { initDatabase, getPool, updateGlobalStats } = require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,7 +15,10 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '../')));
 
 // Initialize database
-initDatabase();
+initDatabase().catch(err => {
+  console.error('Failed to initialize database:', err);
+  process.exit(1);
+});
 
 // ============================================
 // API Endpoints
@@ -27,7 +30,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Save score
-app.post('/api/score', (req, res) => {
+app.post('/api/score', async (req, res) => {
   try {
     const { userId, username, score, rank, language, telegramUser } = req.body;
 
@@ -35,14 +38,32 @@ app.post('/api/score', (req, res) => {
       return res.status(400).json({ error: 'userId and score are required' });
     }
 
-    const db = getDb();
+    const pool = getPool();
     
-    // Convert telegramUser object to JSON string for SQLite
+    // Convert telegramUser object to JSON string for PostgreSQL
     const telegramUserJson = telegramUser ? JSON.stringify(telegramUser) : null;
     
-    db.run(`
+    // Insert or update user
+    await pool.query(`
+      INSERT INTO users (user_id, username, telegram_user, first_name, last_name, language_code, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
+      ON CONFLICT (user_id) DO UPDATE SET
+        username = EXCLUDED.username,
+        telegram_user = EXCLUDED.telegram_user,
+        updated_at = CURRENT_TIMESTAMP
+    `, [
+      userId,
+      username || 'Anonymous',
+      telegramUserJson,
+      telegramUser?.first_name || null,
+      telegramUser?.last_name || null,
+      telegramUser?.language_code || language || 'en'
+    ]);
+
+    // Insert score
+    await pool.query(`
       INSERT INTO scores (user_id, username, telegram_user, score, rank, language, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+      VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
     `, [userId, username || 'Anonymous', telegramUserJson, score, rank || 'Bronze I', language || 'en']);
 
     // Update global stats
@@ -54,44 +75,45 @@ app.post('/api/score', (req, res) => {
     });
   } catch (error) {
     console.error('Save score error:', error);
-    res.status(500).json({ error: 'Failed to save score' });
+    res.status(500).json({ error: 'Failed to save score: ' + error.message });
   }
 });
 
-// Get leaderboard (global top scores)
-app.get('/api/leaderboard', (req, res) => {
+// Get leaderboard (global top scores - unique users with best scores)
+app.get('/api/leaderboard', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 50;
-    const db = getDb();
+    const pool = getPool();
 
     // Get unique users with their best scores
-    const stmt = db.prepare(`
-      SELECT s1.user_id, s1.username, s1.telegram_user, s1.score, s1.rank, s1.language, s1.created_at
+    const result = await pool.query(`
+      SELECT DISTINCT ON (s1.user_id)
+        s1.user_id,
+        s1.username,
+        s1.telegram_user,
+        s1.score,
+        s1.rank,
+        s1.language,
+        s1.created_at
       FROM scores s1
       INNER JOIN (
         SELECT user_id, MAX(score) as max_score
         FROM scores
         GROUP BY user_id
       ) s2 ON s1.user_id = s2.user_id AND s1.score = s2.max_score
+      ORDER BY s1.user_id, s1.score DESC
       ORDER BY s1.score DESC
-      LIMIT ?
-    `);
+      LIMIT $1
+    `, [limit]);
 
-    stmt.bind([limit]);
-    const scores = [];
-    while (stmt.step()) {
-      scores.push(stmt.getAsObject());
-    }
-    stmt.free();
-    
-    res.json({ 
-      success: true, 
-      leaderboard: scores,
-      total: scores.length
+    res.json({
+      success: true,
+      leaderboard: result.rows,
+      total: result.rows.length
     });
   } catch (error) {
     console.error('Get leaderboard error:', error);
-    res.status(500).json({ error: 'Failed to get leaderboard' });
+    res.status(500).json({ error: 'Failed to get leaderboard: ' + error.message });
   }
 });
 
