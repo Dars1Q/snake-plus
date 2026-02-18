@@ -15,22 +15,28 @@ export function setupControls(state, onDirectionChange) {
   // Touch controls for mobile
   let startX, startY;
   let touchStartTime;
+  let touchArea = null;
   
   window.ontouchstart = (e) => {
     if (e.touches.length === 1) {
       startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;
       touchStartTime = Date.now();
-      // Prevent default only for game canvas area
-      if (e.target.closest('#game-canvas') || e.target.closest('#game-container')) {
+      
+      // Find game area
+      touchArea = e.target.closest('#game-canvas') || e.target.closest('#game-container') || document.body;
+      
+      // Prevent default for all touches in game
+      if (touchArea.id !== 'ui' && !e.target.closest('button') && !e.target.closest('select')) {
         e.preventDefault();
       }
     }
   };
   
   window.ontouchmove = (e) => {
-    // Prevent scrolling while playing
-    if (e.target.closest('#game-canvas') || e.target.closest('#game-container')) {
+    // Always prevent scrolling when touching game area
+    const target = e.target.closest('#game-canvas') || e.target.closest('#game-container');
+    if (target) {
       e.preventDefault();
     }
   };
@@ -45,19 +51,19 @@ export function setupControls(state, onDirectionChange) {
       
       // Only register swipe if it's quick (not a long press)
       if (touchDuration < 500) {
+        // Check if swipe is mostly horizontal or vertical
         if (Math.abs(dx) > Math.abs(dy)) {
           // Horizontal swipe
-          if (Math.abs(dx) > 30) { // Minimum swipe distance
+          if (Math.abs(dx) > 30) {
             onDirectionChange(dx > 0 ? 'right' : 'left');
+            e.preventDefault();
           }
         } else {
-          // Vertical swipe - prevent Telegram close
+          // Vertical swipe
           if (Math.abs(dy) > 30) {
             onDirectionChange(dy > 0 ? 'down' : 'up');
-            // Prevent Telegram from closing on downward swipe
-            if (dy > 0) {
-              e.preventDefault();
-            }
+            // CRITICAL: Always prevent default on vertical swipe to stop Telegram close
+            e.preventDefault();
           }
         }
       }

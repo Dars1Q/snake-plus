@@ -151,12 +151,24 @@ function gameLoop(now) {
           const newAchievements = checkAchievements();
           
           // Save score if online mode and server available
+          console.log('Saving score...', {
+            ONLINE_MODE,
+            serverAvailable,
+            score: gameState.score,
+            stars: gameState.stars
+          });
+          
           if (ONLINE_MODE && serverAvailable) {
             const rank = getRank(gameState.score);
             const tgUser = getTelegramUser();
-            saveScore(gameState.score, rank.name, tgUser).catch(err => console.error('Failed to save score:', err));
+            console.log('Sending to server:', { score: gameState.score, rank: rank.name, hasTgUser: !!tgUser });
+            saveScore(gameState.score, rank.name, tgUser)
+              .then(() => console.log('Score saved successfully!'))
+              .catch(err => console.error('Failed to save score:', err));
             // Save stars locally only for now
             localStorage.setItem('snakeplus_stars', String(Math.floor(gameState.stars)));
+          } else {
+            console.log('Not saving - ONLINE_MODE:', ONLINE_MODE, 'serverAvailable:', serverAvailable);
           }
           
           // Pass new achievements to showGameOver
