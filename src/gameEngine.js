@@ -155,7 +155,8 @@ function gameLoop(now) {
             const rank = getRank(gameState.score);
             const tgUser = getTelegramUser();
             saveScore(gameState.score, rank.name, tgUser).catch(err => console.error('Failed to save score:', err));
-            updateStars(Math.floor(gameState.stars), Math.floor(gameState.stars)).catch(err => console.error('Failed to update stars:', err));
+            // Save stars locally only for now
+            localStorage.setItem('snakeplus_stars', String(Math.floor(gameState.stars)));
           }
           
           // Pass new achievements to showGameOver

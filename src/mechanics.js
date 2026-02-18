@@ -583,6 +583,10 @@ function updateGameStats(score, combo, boosterUsed) {
     stats.boostersUsed.push(boosterUsed);
   }
   
+  // Update total games and score
+  stats.totalGames++;
+  stats.totalScore = (stats.totalScore || 0) + score;
+  
   savePlayerStats(stats);
 }
 

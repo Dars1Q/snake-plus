@@ -521,31 +521,15 @@ async function showGameOver(score, restartCallback, newAchievements = []) {
     shareBtn.onclick = () => {
       const shareMessage = `🐍 Snake+\n\n🏆 Score: ${score}\n🏅 Rank: ${rank.name}\n\nCan you beat my score? 🎮`;
       
-      // Check if Telegram WebApp is available
-      if (window.Telegram && window.Telegram.WebApp) {
-        const tg = window.Telegram.WebApp;
-        
-        // Try to use native share if available
-        if (tg.shareURL) {
-          tg.shareURL(`https://t.me/${tg.initDataUnsafe?.user?.username || 'snakeplus'}`);
-        } else if (tg.switchInlineQuery) {
-          // Inline mode - share to chats
-          tg.switchInlineQuery(shareMessage, ['users', 'groups', 'channels']);
-        } else {
-          // Fallback - copy to clipboard with visual feedback
-          copyToClipboard(shareMessage);
-        }
-      } else {
-        // Not in Telegram - copy to clipboard
-        copyToClipboard(shareMessage);
-      }
+      // Always use clipboard (works everywhere)
+      copyToClipboard(shareMessage);
     };
   }
   
   updateLeaderboard();
 }
 
-// Helper function to copy to clipboard
+// Helper function to copy to clipboard with visual feedback
 function copyToClipboard(text) {
   navigator.clipboard.writeText(text).then(() => {
     // Show success message
@@ -561,7 +545,7 @@ function copyToClipboard(text) {
     }
   }).catch(() => {
     // Final fallback - show alert
-    alert('Copy this:\n\n' + text);
+    alert('📋 Copy this:\n\n' + text);
   });
 }
 
