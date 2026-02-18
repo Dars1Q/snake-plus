@@ -17,29 +17,32 @@ export function setupControls(state, onDirectionChange) {
   let touchStartTime;
   let touchArea = null;
 
-  // CRITICAL: Prevent all default touch behaviors on iOS
-  // Use passive: false to allow preventDefault
-  window.addEventListener('touchstart', (e) => {
+  // CRITICAL: Block iOS/touch gestures at the document level
+  // This must be done with passive: false to allow preventDefault
+  document.addEventListener('touchstart', (e) => {
     if (e.touches.length === 1) {
       startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;
       touchStartTime = Date.now();
-
-      // Find game area
       touchArea = e.target.closest('#game-canvas') || e.target.closest('#game-container') || document.body;
     }
-    // Always prevent default on touch start
-    e.preventDefault();
-  }, { passive: false });
+    // Prevent ALL default touch behavior including iOS swipe-to-close
+    if (!e.target.closest('button') && !e.target.closest('input') && !e.target.closest('select')) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, { passive: false, capture: true });
 
-  window.addEventListener('touchmove', (e) => {
-    // ALWAYS prevent scrolling/swiping on iOS - prevents Telegram close gesture
+  document.addEventListener('touchmove', (e) => {
+    // Block ALL touch move behavior - prevents iOS swipe gestures
     e.preventDefault();
-  }, { passive: false });
+    e.stopPropagation();
+  }, { passive: false, capture: true });
 
-  window.addEventListener('touchend', (e) => {
-    // Prevent default for all touchend events to stop iOS swipe gestures
+  document.addEventListener('touchend', (e) => {
+    // Prevent default on ALL touchend
     e.preventDefault();
+    e.stopPropagation();
     
     if (e.changedTouches.length === 1) {
       const endX = e.changedTouches[0].clientX;
@@ -64,7 +67,13 @@ export function setupControls(state, onDirectionChange) {
         }
       }
     }
-  }, { passive: false });
+  }, { passive: false, capture: true });
+
+  // Also block wheel/scroll events
+  document.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, { passive: false, capture: true });
 }
 
 export function handleInput() {

@@ -27,15 +27,23 @@ function initTelegram() {
   if (window.Telegram && window.Telegram.WebApp) {
     const tg = window.Telegram.WebApp;
     
-    // CRITICAL: Tell Telegram to not handle swipe gestures
+    // CRITICAL: Disable all Telegram swipe gestures
     tg.disableVerticalSwipes?.();
     
+    // Ready and expand
     tg.ready();
     tg.expand();
     
-    // Set header color to match background
-    tg.setHeaderColor(tg.themeParams.bg_color || '#0f1419');
-    tg.setBackgroundColor(tg.themeParams.bg_color || '#0f1419');
+    // Set colors to match our theme
+    const bgColor = tg.themeParams?.bg_color || '#0f1419';
+    tg.setHeaderColor(bgColor);
+    tg.setBackgroundColor(bgColor);
+    
+    // CRITICAL: Tell Telegram this is a game - may help with gestures
+    try {
+      tg.MainButton.show();
+      tg.MainButton.hide();
+    } catch(e) {}
 
     // Apply Telegram theme colors
     if (tg.themeParams) {
