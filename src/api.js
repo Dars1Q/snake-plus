@@ -63,6 +63,14 @@ export async function saveScore(score, rank, telegramUser = null) {
   const username = getUsername();
   const language = localStorage.getItem('snakeplus_language') || 'en';
   
+  // Get fresh Telegram user data
+  let tgUser = telegramUser;
+  if (!tgUser && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) {
+    tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+  }
+  
+  console.log('Saving score:', { userId, username, score, rank, hasTgUser: !!tgUser });
+  
   return apiRequest('/score', {
     method: 'POST',
     body: JSON.stringify({
@@ -71,7 +79,7 @@ export async function saveScore(score, rank, telegramUser = null) {
       score,
       rank,
       language,
-      telegramUser,
+      telegramUser: tgUser,
     }),
   });
 }

@@ -525,31 +525,44 @@ async function showGameOver(score, restartCallback, newAchievements = []) {
       if (window.Telegram && window.Telegram.WebApp) {
         const tg = window.Telegram.WebApp;
         
-        // Try different share methods
-        if (tg.switchInlineQuery) {
-          tg.switchInlineQuery(shareMessage, ['selected_chats']);
-        } else if (tg.openTelegramLink) {
-          tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent('Check out Snake+!')}&text=${encodeURIComponent(shareMessage)}`);
+        // Try to use native share if available
+        if (tg.shareURL) {
+          tg.shareURL(`https://t.me/${tg.initDataUnsafe?.user?.username || 'snakeplus'}`);
+        } else if (tg.switchInlineQuery) {
+          // Inline mode - share to chats
+          tg.switchInlineQuery(shareMessage, ['users', 'groups', 'channels']);
         } else {
-          // Fallback to clipboard
-          navigator.clipboard.writeText(shareMessage).then(() => {
-            alert('Result copied to clipboard! 📋\n\n' + shareMessage);
-          }).catch(() => {
-            alert('Share this score:\n\n' + shareMessage);
-          });
+          // Fallback - copy to clipboard with visual feedback
+          copyToClipboard(shareMessage);
         }
       } else {
         // Not in Telegram - copy to clipboard
-        navigator.clipboard.writeText(shareMessage).then(() => {
-          alert('Result copied to clipboard! 📋');
-        }).catch(() => {
-          alert('Share this score:\n\n' + shareMessage);
-        });
+        copyToClipboard(shareMessage);
       }
     };
   }
   
   updateLeaderboard();
+}
+
+// Helper function to copy to clipboard
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    // Show success message
+    const btn = document.getElementById('share-btn');
+    if (btn) {
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '✅ Copied!';
+      btn.style.background = '#2ecc40';
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.style.background = 'linear-gradient(90deg, #0088cc 0%, #0066aa 100%)';
+      }, 2000);
+    }
+  }).catch(() => {
+    // Final fallback - show alert
+    alert('Copy this:\n\n' + text);
+  });
 }
 
 async function updateLeaderboard(newScore) {

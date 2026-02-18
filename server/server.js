@@ -60,10 +60,16 @@ app.get('/api/leaderboard', (req, res) => {
     const limit = parseInt(req.query.limit) || 50;
     const db = getDb();
 
+    // Get unique users with their best scores
     const stmt = db.prepare(`
-      SELECT user_id, username, telegram_user, score, rank, language, created_at
-      FROM scores
-      ORDER BY score DESC
+      SELECT s1.user_id, s1.username, s1.telegram_user, s1.score, s1.rank, s1.language, s1.created_at
+      FROM scores s1
+      INNER JOIN (
+        SELECT user_id, MAX(score) as max_score
+        FROM scores
+        GROUP BY user_id
+      ) s2 ON s1.user_id = s2.user_id AND s1.score = s2.max_score
+      ORDER BY s1.score DESC
       LIMIT ?
     `);
 

@@ -4,8 +4,8 @@ const CONFIG = {
   ONLINE_MODE: true,
 
   // API Base URL (used when ONLINE_MODE is true)
-  // For Railway: replace with your Railway URL
-  API_URL: 'https://your-railway-url.up.railway.app/api',
+  // Railway/Render URL
+  API_URL: 'https://snake-plus-server.onrender.com/api',
 
   // Game settings
   GRID_SIZE: 20,
