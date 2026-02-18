@@ -11,13 +11,15 @@ export function setupControls(state, onDirectionChange) {
       case 'ArrowRight': case 'd': onDirectionChange('right'); break;
     }
   };
-  
+
   // Touch controls for mobile
   let startX, startY;
   let touchStartTime;
   let touchArea = null;
-  
-  window.ontouchstart = (e) => {
+
+  // CRITICAL: Prevent all default touch behaviors on iOS
+  // Use passive: false to allow preventDefault
+  window.addEventListener('touchstart', (e) => {
     if (e.touches.length === 1) {
       startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;
@@ -25,18 +27,17 @@ export function setupControls(state, onDirectionChange) {
 
       // Find game area
       touchArea = e.target.closest('#game-canvas') || e.target.closest('#game-container') || document.body;
-
-      // Prevent default for all touches in game - CRITICAL for iOS/Telegram
-      e.preventDefault();
     }
-  };
+    // Always prevent default on touch start
+    e.preventDefault();
+  }, { passive: false });
 
-  window.ontouchmove = (e) => {
+  window.addEventListener('touchmove', (e) => {
     // ALWAYS prevent scrolling/swiping on iOS - prevents Telegram close gesture
     e.preventDefault();
-  };
+  }, { passive: false });
 
-  window.ontouchend = (e) => {
+  window.addEventListener('touchend', (e) => {
     // Prevent default for all touchend events to stop iOS swipe gestures
     e.preventDefault();
     
@@ -63,7 +64,7 @@ export function setupControls(state, onDirectionChange) {
         }
       }
     }
-  };
+  }, { passive: false });
 }
 
 export function handleInput() {

@@ -26,9 +26,17 @@ let serverAvailable = null;
 function initTelegram() {
   if (window.Telegram && window.Telegram.WebApp) {
     const tg = window.Telegram.WebApp;
+    
+    // CRITICAL: Tell Telegram to not handle swipe gestures
+    tg.disableVerticalSwipes?.();
+    
     tg.ready();
     tg.expand();
     
+    // Set header color to match background
+    tg.setHeaderColor(tg.themeParams.bg_color || '#0f1419');
+    tg.setBackgroundColor(tg.themeParams.bg_color || '#0f1419');
+
     // Apply Telegram theme colors
     if (tg.themeParams) {
       document.documentElement.style.setProperty('--tg-bg-color', tg.themeParams.bg_color || '#0f1419');
@@ -37,7 +45,7 @@ function initTelegram() {
       document.documentElement.style.setProperty('--tg-hint-color', tg.themeParams.hint_color || '#666666');
       document.documentElement.style.setProperty('--tg-secondary-bg-color', tg.themeParams.secondary_bg_color || '#1f2326');
     }
-    
+
     // Store user data
     if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
       const user = tg.initDataUnsafe.user;
@@ -48,25 +56,25 @@ function initTelegram() {
         last_name: user.last_name,
         language_code: user.language_code || 'en'
       }));
-      
+
       // Set language from Telegram
       if (user.language_code && ['en', 'ru'].includes(user.language_code.toLowerCase())) {
         localStorage.setItem('snakeplus_language', user.language_code.toLowerCase());
       }
-      
+
       console.log('Telegram user:', user);
     }
-    
+
     // Enable closing confirmation (if supported)
     try {
       tg.enableClosingConfirmation();
     } catch (e) {
       // Not supported in older Telegram versions
     }
-    
+
     console.log('Telegram WebApp initialized');
   }
-  
+
   // Load saved theme
   loadTheme();
 }

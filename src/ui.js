@@ -524,32 +524,7 @@ async function showGameOver(score, restartCallback, newAchievements = []) {
       
       const shareMessage = `🐍 Snake+\n\n🏆 Score: ${score}\n🏅 Rank: ${rank.name}\n\nCan you beat my score? 🎮`;
 
-      // Try Telegram WebApp share methods
-      if (window.Telegram && window.Telegram.WebApp) {
-        const tg = window.Telegram.WebApp;
-        
-        // Method 1: shareToStory (Telegram 10.0+) - share as story
-        if (tg.shareToStory) {
-          tg.shareToStory(shareMessage);
-          return;
-        }
-        
-        // Method 2: switchInlineQuery - requires inline bot setup
-        if (tg.switchInlineQuery) {
-          tg.switchInlineQuery(shareMessage, ['users', 'groups', 'channels']);
-          return;
-        }
-        
-        // Method 3: openTelegramLink - open share dialog
-        if (tg.openTelegramLink) {
-          // Create a share URL (works in some contexts)
-          const shareUrl = `https://t.me/share/url?url=${encodeURIComponent('https://t.me/myRetroGameBot')}&text=${encodeURIComponent(shareMessage)}`;
-          tg.openTelegramLink(shareUrl);
-          return;
-        }
-      }
-      
-      // Fallback: copy to clipboard with toast notification
+      // Only use clipboard - prevents app closing on iOS
       copyToClipboard(shareMessage);
     };
   }

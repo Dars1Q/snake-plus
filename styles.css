@@ -35,6 +35,23 @@
 
 * {
   box-sizing: border-box;
+  /* Prevent text selection on iOS */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  /* Prevent iOS zoom on input focus */
+  touch-action: manipulation;
+}
+
+/* Prevent pull-to-refresh on iOS */
+html, body {
+  overscroll-behavior: none;
+  -webkit-overscroll-behavior: none;
+  /* Prevent iOS rubber band scrolling */
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
