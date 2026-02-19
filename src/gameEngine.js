@@ -40,6 +40,16 @@ function initTelegram() {
       if (tg.setBackgroundColor) tg.setBackgroundColor(bgColor);
     } catch(e) {}
 
+    // CRITICAL: Disable vertical swipes to prevent app closing (Telegram 7.7+)
+    try {
+      if (tg.disableVerticalSwipes) {
+        tg.disableVerticalSwipes();
+        console.log('✅ Vertical swipes disabled by Telegram');
+      }
+    } catch(e) {
+      console.log('ℹ️ disableVerticalSwipes not available');
+    }
+
     // Apply Telegram theme colors
     if (tg.themeParams) {
       document.documentElement.style.setProperty('--tg-bg-color', tg.themeParams.bg_color || '#0f1419');
