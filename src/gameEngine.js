@@ -212,7 +212,7 @@ function initGlobalSwipeControls() {
   document.addEventListener('touchmove', (e) => {
     // Only intercept swipes when game is actively running (not in menu, not game over)
     const gameIsActive = gameState && !gameState.gameOver;
-    
+
     if (gameIsActive && e.touches.length === 1 && !swipeDirection) {
       const touch = e.touches[0];
       const dx = touch.clientX - swipeStartX;
@@ -228,15 +228,17 @@ function initGlobalSwipeControls() {
         if (gameState) {
           gameState.nextDirection = swipeDirection;
         }
+        // BLOCK scroll during game swipe
         e.preventDefault();
       }
-      
+
+      // Always prevent default during active game swipe
       if (swipeIsSwiping) {
         e.preventDefault();
       }
     }
     // When NOT in game - allow normal scrolling (don't call preventDefault)
-  }, { passive: true });
+  }, { passive: false });
 
   document.addEventListener('touchend', (e) => {
     swipeIsSwiping = false;

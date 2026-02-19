@@ -98,6 +98,7 @@ body {
   -webkit-overflow-scrolling: touch;
   max-height: 100%;
   scrollbar-width: none;
+  min-height: 0;
 }
 
 #ui::-webkit-scrollbar {
