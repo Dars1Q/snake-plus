@@ -33,12 +33,14 @@ function initTelegram() {
     // Expand to full height
     tg.expand();
     
-    // Set colors to match our theme
-    const bgColor = tg.themeParams?.bg_color || '#0f1419';
-    tg.setHeaderColor(bgColor);
-    tg.setBackgroundColor(bgColor);
+    // Set colors to match our theme (only if supported)
+    try {
+      const bgColor = tg.themeParams?.bg_color || '#0f1419';
+      if (tg.setHeaderColor) tg.setHeaderColor(bgColor);
+      if (tg.setBackgroundColor) tg.setBackgroundColor(bgColor);
+    } catch(e) {}
     
-    // CRITICAL: Disable vertical swipes (iOS/Android)
+    // CRITICAL: Disable vertical swipes (iOS/Android) - only if supported
     try {
       if (tg.disableVerticalSwipes) {
         tg.disableVerticalSwipes();
@@ -87,7 +89,9 @@ function initTelegram() {
 
     // Enable closing confirmation (if supported)
     try {
-      tg.enableClosingConfirmation();
+      if (tg.enableClosingConfirmation) {
+        tg.enableClosingConfirmation();
+      }
     } catch (e) {
       // Not supported in older Telegram versions
     }
