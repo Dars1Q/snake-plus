@@ -13,24 +13,21 @@ export function setupControls(state, onDirectionChange) {
   };
 
   // ============================================
-  // Swipe Controls - Simple and Reliable
+  // Swipe Controls - NO PREVENT DEFAULT
   // ============================================
   let startX = 0, startY = 0;
-  let touchStartTime = 0;
   let isSwiping = false;
   let swipeDirection = null;
 
   // Touch START
   document.addEventListener('touchstart', (e) => {
     if (e.touches.length === 1) {
-      const touch = e.touches[0];
-      startX = touch.clientX;
-      startY = touch.clientY;
-      touchStartTime = Date.now();
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
       isSwiping = false;
       swipeDirection = null;
     }
-  }, { passive: true });
+  });
 
   // Touch MOVE - detect swipe
   document.addEventListener('touchmove', (e) => {
@@ -39,8 +36,8 @@ export function setupControls(state, onDirectionChange) {
       const dx = touch.clientX - startX;
       const dy = touch.clientY - startY;
 
-      // Detect swipe if moved more than 20px (reduced from 30px)
-      if (!isSwiping && (Math.abs(dx) > 20 || Math.abs(dy) > 20)) {
+      // Detect swipe if moved more than 30px
+      if (!isSwiping && (Math.abs(dx) > 30 || Math.abs(dy) > 30)) {
         isSwiping = true;
 
         // Determine direction
@@ -50,29 +47,18 @@ export function setupControls(state, onDirectionChange) {
           swipeDirection = dy > 0 ? 'down' : 'up';
         }
 
-        // Prevent scroll
-        e.preventDefault();
-      }
-
-      // Always prevent default during swipe
-      if (isSwiping) {
-        e.preventDefault();
-      }
-    }
-  }, { passive: false });
-
-  // Touch END - trigger direction
-  document.addEventListener('touchend', (e) => {
-    if (isSwiping && swipeDirection) {
-      const touchDuration = Date.now() - touchStartTime;
-
-      // Only quick swipes (< 500ms)
-      if (touchDuration < 500) {
-        console.log('Swipe:', swipeDirection);
+        console.log('Swipe detected:', swipeDirection);
         onDirectionChange(swipeDirection);
       }
     }
-  }, { passive: true });
+  });
+
+  // Touch END
+  document.addEventListener('touchend', (e) => {
+    // Reset
+    isSwiping = false;
+    swipeDirection = null;
+  });
 }
 
 export function handleInput() {
