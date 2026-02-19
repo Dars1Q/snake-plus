@@ -26,37 +26,18 @@ let serverAvailable = null;
 function initTelegram() {
   if (window.Telegram && window.Telegram.WebApp) {
     const tg = window.Telegram.WebApp;
-    
+
     // Ready first
     tg.ready();
-    
+
     // Expand to full height
     tg.expand();
-    
-    // Set colors to match our theme (only if supported)
+
+    // Set colors (ignore errors on old versions)
     try {
       const bgColor = tg.themeParams?.bg_color || '#0f1419';
       if (tg.setHeaderColor) tg.setHeaderColor(bgColor);
       if (tg.setBackgroundColor) tg.setBackgroundColor(bgColor);
-    } catch(e) {}
-    
-    // CRITICAL: Disable vertical swipes (iOS/Android) - only if supported
-    try {
-      if (tg.disableVerticalSwipes) {
-        tg.disableVerticalSwipes();
-        console.log('Vertical swipes disabled');
-      }
-    } catch(e) {}
-    
-    // CRITICAL: Enable sticky app mode (Telegram 7.7+)
-    // This prevents swipe-down from closing the app
-    try {
-      if (tg.platform !== 'web' && tg.platform !== 'weba' && tg.platform !== 'webk' && tg.platform !== 'tdesktop') {
-        // Apply sticky app class
-        document.documentElement.classList.add('sticky-app');
-        document.body.classList.add('sticky-app');
-        console.log('Sticky App Mode enabled for platform:', tg.platform);
-      }
     } catch(e) {}
 
     // Apply Telegram theme colors
@@ -85,15 +66,6 @@ function initTelegram() {
       }
 
       console.log('Telegram user:', user);
-    }
-
-    // Enable closing confirmation (if supported)
-    try {
-      if (tg.enableClosingConfirmation) {
-        tg.enableClosingConfirmation();
-      }
-    } catch (e) {
-      // Not supported in older Telegram versions
     }
 
     console.log('Telegram WebApp initialized');
