@@ -11,52 +11,6 @@ export function setupControls(state, onDirectionChange) {
       case 'ArrowRight': case 'd': onDirectionChange('right'); break;
     }
   };
-
-  // ============================================
-  // Swipe Controls
-  // ============================================
-  let startX = 0, startY = 0;
-  let isSwiping = false;
-  let swipeDirection = null;
-
-  // Touch START
-  document.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 1) {
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-      isSwiping = false;
-      swipeDirection = null;
-    }
-  });
-
-  // Touch MOVE - detect swipe
-  document.addEventListener('touchmove', (e) => {
-    if (e.touches.length === 1 && !swipeDirection) {
-      const touch = e.touches[0];
-      const dx = touch.clientX - startX;
-      const dy = touch.clientY - startY;
-
-      // Detect swipe if moved more than 30px
-      if (!isSwiping && (Math.abs(dx) > 30 || Math.abs(dy) > 30)) {
-        isSwiping = true;
-
-        // Determine direction
-        if (Math.abs(dx) > Math.abs(dy)) {
-          swipeDirection = dx > 0 ? 'right' : 'left';
-        } else {
-          swipeDirection = dy > 0 ? 'down' : 'up';
-        }
-
-        onDirectionChange(swipeDirection);
-      }
-    }
-  });
-
-  // Touch END
-  document.addEventListener('touchend', (e) => {
-    isSwiping = false;
-    swipeDirection = null;
-  });
 }
 
 export function handleInput() {
