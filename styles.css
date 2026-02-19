@@ -579,10 +579,8 @@ label {
 }
 
 /* ============================================
-   Mobile Control Buttons (D-Pad)
    Compact arrows - 3 on left, 1 on right
    ============================================ */
-.mobile-controls {
   display: grid;
   position: fixed;
   bottom: 16px;
@@ -595,7 +593,6 @@ label {
   pointer-events: auto;
 }
 
-.dpad {
   display: grid;
   grid-template-columns: repeat(4, 48px);
   grid-template-rows: repeat(2, 48px);
@@ -605,7 +602,6 @@ label {
   pointer-events: auto;
 }
 
-.dpad-btn {
   width: 48px;
   height: 48px;
   border-radius: 8px;
@@ -626,7 +622,6 @@ label {
   pointer-events: auto;
 }
 
-.dpad-btn:active, .dpad-btn.active {
   background: rgba(46, 204, 64, 0.4);
   border-color: rgba(46, 204, 64, 0.6);
   color: rgba(46, 204, 64, 1);
@@ -635,28 +630,23 @@ label {
 }
 
 /* Button positions - compact layout */
-.dpad-up {
   grid-column: 2;
   grid-row: 1;
 }
 
-.dpad-left {
   grid-column: 1;
   grid-row: 2;
 }
 
-.dpad-down {
   grid-column: 3;
   grid-row: 2;
 }
 
-.dpad-right {
   grid-column: 4;
   grid-row: 1;
 }
 
 /* Toggle button for controls visibility */
-.controls-toggle {
   position: fixed;
   top: 10px;
   right: 10px;
@@ -679,17 +669,14 @@ label {
 }
 
 @media (max-width: 768px) {
-  .controls-toggle {
     display: flex;
   }
 }
 
-.controls-toggle:active {
   background: rgba(46, 204, 64, 0.6);
   transform: scale(0.95);
 }
 
 /* Hide controls when disabled */
-.mobile-controls.hidden {
   display: none !important;
 }

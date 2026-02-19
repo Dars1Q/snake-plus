@@ -16,7 +16,7 @@
   <script>
     // Cache busting - force reload new versions
     (function() {
-      const VERSION = '38';
+      const VERSION = '39';
       const cssLink = document.getElementById('css-link');
       const gameScript = document.getElementById('game-script');
       
@@ -67,39 +67,28 @@
     </div>
   </div>
   
-  <!-- Mobile Control Buttons -->
-  <button class="controls-toggle" id="controls-toggle-btn" title="Показать/скрыть кнопки" style="position:fixed;top:10px;right:10px;z-index:1001;width:44px;height:44px;border-radius:50%;background:rgba(46,204,64,0.3);border:2px solid rgba(46,204,64,0.5);color:#2ecc40;font-size:1.2rem;display:flex;justify-content:center;align-items:center;cursor:pointer;">🎮</button>
-  <div class="mobile-controls" id="mobile-controls" style="display:grid;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:1000;pointer-events:auto;">
-    <div class="dpad" style="display:grid;grid-template-columns:repeat(4,48px);grid-template-rows:repeat(2,48px);gap:4px;pointer-events:auto;">
-      <div class="dpad-btn dpad-left" data-direction="left" style="width:48px;height:48px;border-radius:8px;background:rgba(46,204,64,0.15);border:1px solid rgba(46,204,64,0.3);color:rgba(46,204,64,0.8);font-size:1rem;font-weight:bold;display:flex;justify-content:center;align-items:center;cursor:pointer;pointer-events:auto;">◀</div>
-      <div class="dpad-btn dpad-up" data-direction="up" style="grid-column:2;grid-row:1;width:48px;height:48px;border-radius:8px;background:rgba(46,204,64,0.15);border:1px solid rgba(46,204,64,0.3);color:rgba(46,204,64,0.8);font-size:1rem;font-weight:bold;display:flex;justify-content:center;align-items:center;cursor:pointer;pointer-events:auto;">▲</div>
-      <div class="dpad-btn dpad-down" data-direction="down" style="grid-column:3;grid-row:2;width:48px;height:48px;border-radius:8px;background:rgba(46,204,64,0.15);border:1px solid rgba(46,204,64,0.3);color:rgba(46,204,64,0.8);font-size:1rem;font-weight:bold;display:flex;justify-content:center;align-items:center;cursor:pointer;pointer-events:auto;">▼</div>
-      <div class="dpad-btn dpad-right" data-direction="right" style="grid-column:4;grid-row:1;width:48px;height:48px;border-radius:8px;background:rgba(46,204,64,0.15);border:1px solid rgba(46,204,64,0.3);color:rgba(46,204,64,0.8);font-size:1rem;font-weight:bold;display:flex;justify-content:center;align-items:center;cursor:pointer;pointer-events:auto;">▶</div>
-    </div>
-  </div>
-  
   <script>
     // Enable Sticky App Mode on iOS/Android to prevent swipe-down close
     (function() {
       function enableStickyApp() {
         if (!window.Telegram || !window.Telegram.WebApp) return;
-        
+
         const tg = window.Telegram.WebApp;
         const platform = tg.platform || 'unknown';
-        
+
         // Don't apply for desktop/web versions
         if (['macos', 'tdesktop', 'weba', 'web', 'webk', 'unknown'].includes(platform)) {
           console.log('Sticky App: Not applying for platform:', platform);
           return;
         }
-        
+
         // Apply sticky app mode
         document.documentElement.classList.add('sticky-app');
         document.body.classList.add('sticky-app');
-        
+
         console.log('Sticky App Mode enabled for platform:', platform);
       }
-      
+
       // Run when Telegram WebApp is ready
       if (window.Telegram && window.Telegram.WebApp) {
         window.Telegram.WebApp.ready();
@@ -107,32 +96,6 @@
       } else {
         window.addEventListener('DOMContentLoaded', enableStickyApp);
       }
-    })();
-    
-    // Mobile controls visibility toggle
-    (function() {
-      const toggleBtn = document.getElementById('controls-toggle-btn');
-      const controls = document.getElementById('mobile-controls');
-      
-      if (!toggleBtn || !controls) return;
-      
-      // Load saved state
-      const savedState = localStorage.getItem('snakeplus_controls_visible');
-      if (savedState === 'false') {
-        controls.classList.add('hidden');
-      }
-      
-      toggleBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        controls.classList.toggle('hidden');
-        localStorage.setItem('snakeplus_controls_visible', !controls.classList.contains('hidden'));
-      });
-      
-      // Prevent default touch behavior on controls
-      controls.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
-      controls.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
-      controls.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
     })();
   </script>
 </body>
