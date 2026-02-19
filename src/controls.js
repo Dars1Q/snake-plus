@@ -2,8 +2,11 @@
 // Handles keyboard and touch controls
 
 export function setupControls(state, onDirectionChange) {
+  console.log('setupControls called');
+  
   // Keyboard controls
   window.onkeydown = (e) => {
+    console.log('Key pressed:', e.key);
     switch (e.key) {
       case 'ArrowUp': case 'w': onDirectionChange('up'); break;
       case 'ArrowDown': case 's': onDirectionChange('down'); break;
@@ -13,7 +16,7 @@ export function setupControls(state, onDirectionChange) {
   };
 
   // ============================================
-  // Swipe Controls - NO PREVENT DEFAULT
+  // Swipe Controls - WITH LOGS
   // ============================================
   let startX = 0, startY = 0;
   let isSwiping = false;
@@ -21,11 +24,13 @@ export function setupControls(state, onDirectionChange) {
 
   // Touch START
   document.addEventListener('touchstart', (e) => {
+    console.log('touchstart!', e.touches.length, 'touches');
     if (e.touches.length === 1) {
       startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;
       isSwiping = false;
       swipeDirection = null;
+      console.log('Start pos:', startX, startY);
     }
   });
 
@@ -35,6 +40,7 @@ export function setupControls(state, onDirectionChange) {
       const touch = e.touches[0];
       const dx = touch.clientX - startX;
       const dy = touch.clientY - startY;
+      console.log('touchmove:', dx, dy, 'swiping:', isSwiping);
 
       // Detect swipe if moved more than 30px
       if (!isSwiping && (Math.abs(dx) > 30 || Math.abs(dy) > 30)) {
@@ -47,7 +53,7 @@ export function setupControls(state, onDirectionChange) {
           swipeDirection = dy > 0 ? 'down' : 'up';
         }
 
-        console.log('Swipe detected:', swipeDirection);
+        console.log('🎯 SWIPE:', swipeDirection);
         onDirectionChange(swipeDirection);
       }
     }
@@ -55,10 +61,13 @@ export function setupControls(state, onDirectionChange) {
 
   // Touch END
   document.addEventListener('touchend', (e) => {
+    console.log('touchend');
     // Reset
     isSwiping = false;
     swipeDirection = null;
   });
+  
+  console.log('Swipe controls setup complete');
 }
 
 export function handleInput() {
