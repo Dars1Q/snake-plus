@@ -89,12 +89,13 @@ function startGame() {
   console.log('startGame invoked');
   // Initialize sound system on first user interaction
   soundManager.init();
-  
+
   gameState = getInitialState();
   setupControls(gameState, onDirectionChange);
   if (gameInterval) cancelAnimationFrame(gameInterval);
   lastMoveTime = performance.now();
   showStartScreen(false);
+  setGameRunning(true); // Enable swipe controls
   gameInterval = requestAnimationFrame(gameLoop);
 }
 
@@ -178,6 +179,7 @@ function gameLoop(now) {
           }
           
           // Pass new achievements to showGameOver
+          setGameRunning(false); // Disable swipe controls
           showGameOver(gameState.score, startGame, newAchievements).catch(err => console.error('showGameOver error:', err));
         }
       });
@@ -194,29 +196,31 @@ function onDirectionChange(dir) {
   if (gameState) gameState.nextDirection = dir;
 }
 
-// Global swipe controls - work everywhere (menu, game, etc)
-function initGlobalSwipeControls() {
-  let startX = 0, startY = 0;
-  let isSwiping = false;
-  let swipeDirection = null;
+// Global swipe controls - work ONLY during gameplay
+let swipeStartX = 0, swipeStartY = 0;
+let swipeIsSwiping = false;
+let swipeDirection = null;
+let gameRunning = false;
 
+function initGlobalSwipeControls() {
   document.addEventListener('touchstart', (e) => {
     if (e.touches.length === 1) {
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-      isSwiping = false;
+      swipeStartX = e.touches[0].clientX;
+      swipeStartY = e.touches[0].clientY;
+      swipeIsSwiping = false;
       swipeDirection = null;
     }
   }, { passive: true });
 
   document.addEventListener('touchmove', (e) => {
-    if (e.touches.length === 1 && !swipeDirection) {
+    // Only intercept swipes during gameplay
+    if (gameRunning && e.touches.length === 1 && !swipeDirection) {
       const touch = e.touches[0];
-      const dx = touch.clientX - startX;
-      const dy = touch.clientY - startY;
+      const dx = touch.clientX - swipeStartX;
+      const dy = touch.clientY - swipeStartY;
 
-      if (!isSwiping && (Math.abs(dx) > 30 || Math.abs(dy) > 30)) {
-        isSwiping = true;
+      if (!swipeIsSwiping && (Math.abs(dx) > 30 || Math.abs(dy) > 30)) {
+        swipeIsSwiping = true;
         if (Math.abs(dx) > Math.abs(dy)) {
           swipeDirection = dx > 0 ? 'right' : 'left';
         } else {
@@ -225,14 +229,23 @@ function initGlobalSwipeControls() {
         if (gameState) {
           gameState.nextDirection = swipeDirection;
         }
+        e.preventDefault();
+      }
+      
+      if (swipeIsSwiping) {
+        e.preventDefault();
       }
     }
   }, { passive: false });
 
   document.addEventListener('touchend', (e) => {
-    isSwiping = false;
+    swipeIsSwiping = false;
     swipeDirection = null;
   }, { passive: true });
+}
+
+function setGameRunning(running) {
+  gameRunning = running;
 }
 
 window.onload = async () => {
