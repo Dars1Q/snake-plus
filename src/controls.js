@@ -18,6 +18,7 @@ export function setupControls(state, onDirectionChange) {
   let startX, startY;
   let touchStartTime;
   let touchArea = null;
+  let isSwiping = false;
 
   // CRITICAL: Block iOS/touch gestures at the document level
   // This must be done with passive: false to allow preventDefault
@@ -27,8 +28,10 @@ export function setupControls(state, onDirectionChange) {
       startY = e.touches[0].clientY;
       touchStartTime = Date.now();
       touchArea = e.target.closest('#game-canvas') || e.target.closest('#game-container') || document.body;
+      isSwiping = false;
     }
     // Prevent ALL default touch behavior including iOS swipe-to-close
+    // EXCEPT on buttons/inputs
     if (!e.target.closest('button') && !e.target.closest('input') && !e.target.closest('select')) {
       e.preventDefault();
       e.stopPropagation();
@@ -36,17 +39,32 @@ export function setupControls(state, onDirectionChange) {
   }, { passive: false, capture: true });
 
   document.addEventListener('touchmove', (e) => {
-    // Block ALL touch move behavior - prevents iOS swipe gestures
-    e.preventDefault();
-    e.stopPropagation();
+    // Allow swipe detection on game area
+    if (e.touches.length === 1) {
+      const endX = e.touches[0].clientX;
+      const endY = e.touches[0].clientY;
+      const dx = endX - startX;
+      const dy = endY - startY;
+      
+      // Start detecting swipe if moved more than 10px
+      if (!isSwiping && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+        isSwiping = true;
+      }
+      
+      // If swiping on game area, prevent default to stop scroll
+      if (isSwiping && touchArea) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }
   }, { passive: false, capture: true });
 
   document.addEventListener('touchend', (e) => {
-    // Prevent default on ALL touchend
+    // Prevent default on ALL touchend to stop iOS gestures
     e.preventDefault();
     e.stopPropagation();
-    
-    if (e.changedTouches.length === 1) {
+
+    if (e.changedTouches.length === 1 && isSwiping) {
       const endX = e.changedTouches[0].clientX;
       const endY = e.changedTouches[0].clientY;
       const dx = endX - startX;
@@ -60,11 +78,13 @@ export function setupControls(state, onDirectionChange) {
           // Horizontal swipe
           if (Math.abs(dx) > 30) {
             onDirectionChange(dx > 0 ? 'right' : 'left');
+            console.log('Swipe right:', dx > 0 ? 'right' : 'left');
           }
         } else {
           // Vertical swipe
           if (Math.abs(dy) > 30) {
             onDirectionChange(dy > 0 ? 'down' : 'up');
+            console.log('Swipe vertical:', dy > 0 ? 'down' : 'up');
           }
         }
       }
