@@ -219,13 +219,55 @@ function gameLoop(now) {
 }
 
 function onDirectionChange(dir) {
-  gameState.nextDirection = dir;
+  if (gameState) gameState.nextDirection = dir;
+}
+
+// Global swipe controls - work everywhere (menu, game, etc)
+function initGlobalSwipeControls() {
+  let startX = 0, startY = 0;
+  let isSwiping = false;
+  let swipeDirection = null;
+
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      isSwiping = false;
+      swipeDirection = null;
+    }
+  });
+
+  document.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 1 && !swipeDirection) {
+      const touch = e.touches[0];
+      const dx = touch.clientX - startX;
+      const dy = touch.clientY - startY;
+
+      if (!isSwiping && (Math.abs(dx) > 30 || Math.abs(dy) > 30)) {
+        isSwiping = true;
+        if (Math.abs(dx) > Math.abs(dy)) {
+          swipeDirection = dx > 0 ? 'right' : 'left';
+        } else {
+          swipeDirection = dy > 0 ? 'down' : 'up';
+        }
+      }
+    }
+  });
+
+  document.addEventListener('touchend', (e) => {
+    if (isSwiping && swipeDirection && gameState) {
+      gameState.nextDirection = swipeDirection;
+    }
+    isSwiping = false;
+    swipeDirection = null;
+  });
 }
 
 window.onload = async () => {
   initTelegram();
   await checkServer();
   initRenderer();
+  initGlobalSwipeControls(); // Global swipes work everywhere
   showStartScreen(true, startGame);
 };
 
