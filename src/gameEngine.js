@@ -229,11 +229,13 @@ function initGlobalSwipeControls() {
   let swipeDirection = null;
 
   document.addEventListener('touchstart', (e) => {
+    console.log('👆 TOUCH START');
     if (e.touches.length === 1) {
       startX = e.touches[0].clientX;
       startY = e.touches[0].clientY;
       isSwiping = false;
       swipeDirection = null;
+      console.log('Start:', startX, startY);
     }
   });
 
@@ -242,6 +244,7 @@ function initGlobalSwipeControls() {
       const touch = e.touches[0];
       const dx = touch.clientX - startX;
       const dy = touch.clientY - startY;
+      console.log('👆 MOVE:', dx.toFixed(0), dy.toFixed(0));
 
       if (!isSwiping && (Math.abs(dx) > 30 || Math.abs(dy) > 30)) {
         isSwiping = true;
@@ -250,17 +253,26 @@ function initGlobalSwipeControls() {
         } else {
           swipeDirection = dy > 0 ? 'down' : 'up';
         }
+        console.log('🎯 SWIPE:', swipeDirection, 'dx:', dx.toFixed(0), 'dy:', dy.toFixed(0));
       }
     }
   });
 
   document.addEventListener('touchend', (e) => {
-    if (isSwiping && swipeDirection && gameState) {
-      gameState.nextDirection = swipeDirection;
+    console.log('👆 TOUCH END');
+    if (isSwiping && swipeDirection) {
+      if (gameState) {
+        gameState.nextDirection = swipeDirection;
+        console.log('✅ Direction changed to:', swipeDirection);
+      } else {
+        console.log('❌ No gameState!');
+      }
     }
     isSwiping = false;
     swipeDirection = null;
   });
+  
+  console.log('✅ Global swipe controls initialized');
 }
 
 window.onload = async () => {
