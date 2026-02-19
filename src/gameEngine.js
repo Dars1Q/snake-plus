@@ -200,7 +200,6 @@ function onDirectionChange(dir) {
 let swipeStartX = 0, swipeStartY = 0;
 let swipeIsSwiping = false;
 let swipeDirection = null;
-let gameRunning = false;
 
 function initGlobalSwipeControls() {
   document.addEventListener('touchstart', (e) => {
@@ -213,8 +212,10 @@ function initGlobalSwipeControls() {
   }, { passive: true });
 
   document.addEventListener('touchmove', (e) => {
-    // Only intercept swipes during gameplay
-    if (gameRunning && e.touches.length === 1 && !swipeDirection) {
+    // Only intercept swipes when game is actively running (not in menu, not game over)
+    const gameIsActive = gameState && !gameState.gameOver;
+    
+    if (gameIsActive && e.touches.length === 1 && !swipeDirection) {
       const touch = e.touches[0];
       const dx = touch.clientX - swipeStartX;
       const dy = touch.clientY - swipeStartY;
@@ -236,16 +237,13 @@ function initGlobalSwipeControls() {
         e.preventDefault();
       }
     }
-  }, { passive: false });
+    // When NOT in game - allow normal scrolling (don't call preventDefault)
+  }, { passive: true });
 
   document.addEventListener('touchend', (e) => {
     swipeIsSwiping = false;
     swipeDirection = null;
   }, { passive: true });
-}
-
-function setGameRunning(running) {
-  gameRunning = running;
 }
 
 window.onload = async () => {
