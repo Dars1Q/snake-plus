@@ -13,87 +13,72 @@ export function setupControls(state, onDirectionChange) {
   };
 
   // ============================================
-  // Swipe Controls (with aggressive prevention)
+  // Swipe Controls
   // ============================================
-  let startX, startY;
-  let touchStartTime;
-  let touchArea = null;
+  let startX = 0, startY = 0;
+  let touchStartTime = 0;
   let isSwiping = false;
+  let swipeDetected = false;
+  let swipeDirection = null;
 
-  // CRITICAL: Block iOS/touch gestures at the document level
-  // This must be done with passive: false to allow preventDefault
-  document.addEventListener('touchstart', (e) => {
+  // Touch START - record initial position
+  const handleTouchStart = (e) => {
     if (e.touches.length === 1) {
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
       touchStartTime = Date.now();
-      touchArea = e.target.closest('#game-canvas') || e.target.closest('#game-container') || document.body;
       isSwiping = false;
+      swipeDetected = false;
+      swipeDirection = null;
     }
-    // Prevent ALL default touch behavior including iOS swipe-to-close
-    // EXCEPT on buttons/inputs
-    if (!e.target.closest('button') && !e.target.closest('input') && !e.target.closest('select')) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  }, { passive: false, capture: true });
+  };
 
-  document.addEventListener('touchmove', (e) => {
-    // ALWAYS prevent default on iOS to stop system gestures
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Track swipe
-    if (e.touches.length === 1) {
-      const endX = e.touches[0].clientX;
-      const endY = e.touches[0].clientY;
-      const dx = endX - startX;
-      const dy = endY - startY;
-
-      // Start detecting swipe if moved more than 10px
-      if (!isSwiping && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+  // Touch MOVE - detect swipe direction
+  const handleTouchMove = (e) => {
+    if (e.touches.length === 1 && !swipeDetected) {
+      const touch = e.touches[0];
+      const dx = touch.clientX - startX;
+      const dy = touch.clientY - startY;
+      
+      // Detect swipe if moved more than 30px
+      if (!isSwiping && (Math.abs(dx) > 30 || Math.abs(dy) > 30)) {
         isSwiping = true;
-      }
-    }
-  }, { passive: false, capture: true });
-
-  document.addEventListener('touchend', (e) => {
-    // Prevent default on ALL touchend to stop iOS gestures
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (e.changedTouches.length === 1 && isSwiping) {
-      const endX = e.changedTouches[0].clientX;
-      const endY = e.changedTouches[0].clientY;
-      const dx = endX - startX;
-      const dy = endY - startY;
-      const touchDuration = Date.now() - touchStartTime;
-
-      // Only register swipe if it's quick (not a long press)
-      if (touchDuration < 500) {
-        // Check if swipe is mostly horizontal or vertical
+        
+        // Determine direction
         if (Math.abs(dx) > Math.abs(dy)) {
-          // Horizontal swipe
-          if (Math.abs(dx) > 30) {
-            onDirectionChange(dx > 0 ? 'right' : 'left');
-            console.log('Swipe right:', dx > 0 ? 'right' : 'left');
-          }
+          swipeDirection = dx > 0 ? 'right' : 'left';
         } else {
-          // Vertical swipe
-          if (Math.abs(dy) > 30) {
-            onDirectionChange(dy > 0 ? 'down' : 'up');
-            console.log('Swipe vertical:', dy > 0 ? 'down' : 'up');
-          }
+          swipeDirection = dy > 0 ? 'down' : 'up';
         }
       }
+      
+      // Prevent default if swiping to stop scroll
+      if (isSwiping && e.cancelable) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
     }
-  }, { passive: false, capture: true });
+  };
 
-  // Also block wheel/scroll events
-  document.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-  }, { passive: false, capture: true });
+  // Touch END - trigger direction change
+  const handleTouchEnd = (e) => {
+    if (isSwiping && swipeDirection && !swipeDetected) {
+      const touchDuration = Date.now() - touchStartTime;
+      
+      // Only quick swipes (< 500ms)
+      if (touchDuration < 500) {
+        swipeDetected = true;
+        console.log('Swipe detected:', swipeDirection);
+        onDirectionChange(swipeDirection);
+      }
+    }
+  };
+
+  // Add event listeners
+  document.addEventListener('touchstart', handleTouchStart, { passive: true });
+  document.addEventListener('touchmove', handleTouchMove, { passive: false });
+  document.addEventListener('touchend', handleTouchEnd, { passive: true });
 }
 
 export function handleInput() {
