@@ -39,22 +39,20 @@ export function setupControls(state, onDirectionChange) {
   }, { passive: false, capture: true });
 
   document.addEventListener('touchmove', (e) => {
-    // Allow swipe detection on game area
+    // ALWAYS prevent default on iOS to stop system gestures
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Track swipe
     if (e.touches.length === 1) {
       const endX = e.touches[0].clientX;
       const endY = e.touches[0].clientY;
       const dx = endX - startX;
       const dy = endY - startY;
-      
+
       // Start detecting swipe if moved more than 10px
       if (!isSwiping && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
         isSwiping = true;
-      }
-      
-      // If swiping on game area, prevent default to stop scroll
-      if (isSwiping && touchArea) {
-        e.preventDefault();
-        e.stopPropagation();
       }
     }
   }, { passive: false, capture: true });
