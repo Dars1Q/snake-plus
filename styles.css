@@ -35,15 +35,12 @@
 
 * {
   box-sizing: border-box;
-  /* Prevent text selection on iOS */
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
-  /* Prevent highlight on tap */
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Allow scrolling in menus */
 html {
   overscroll-behavior: none;
   -webkit-overscroll-behavior: none;
@@ -66,7 +63,6 @@ body {
   align-items: center;
 }
 
-/* Game container */
 #game-container {
   background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-card) 100%);
   border-radius: 12px;
@@ -77,7 +73,8 @@ body {
   align-items: center;
   width: 100%;
   max-width: 520px;
-  transition: background 0.3s ease;
+  max-height: 95vh;
+  overflow: hidden;
 }
 
 #game-canvas {
@@ -89,7 +86,7 @@ body {
   width: 100%;
   max-width: 400px;
   height: auto;
-  transition: background 0.3s ease;
+  flex-shrink: 0;
 }
 
 #ui {
@@ -97,7 +94,14 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  max-height: 100%;
+  scrollbar-width: none;
+}
+
+#ui::-webkit-scrollbar {
+  display: none;
 }
 
 h2 {
