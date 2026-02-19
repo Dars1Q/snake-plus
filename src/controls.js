@@ -13,17 +13,28 @@ export function setupControls(state, onDirectionChange) {
   };
 
   // ============================================
-  // Swipe Controls
+  // Swipe Controls - ONLY on game canvas
   // ============================================
   let startX = 0, startY = 0;
   let touchStartTime = 0;
   let isSwiping = false;
   let swipeDetected = false;
   let swipeDirection = null;
+  let onGameArea = false;
 
   // Touch START - record initial position
   const handleTouchStart = (e) => {
-    if (e.touches.length === 1) {
+    // Check if touch is on game area
+    const gameCanvas = document.getElementById('game-canvas');
+    const gameContainer = document.getElementById('game-container');
+    const target = e.target;
+    
+    onGameArea = target === gameCanvas || 
+                 target === gameContainer || 
+                 gameCanvas?.contains(target) ||
+                 gameContainer?.contains(target);
+    
+    if (e.touches.length === 1 && onGameArea) {
       const touch = e.touches[0];
       startX = touch.clientX;
       startY = touch.clientY;
@@ -34,9 +45,9 @@ export function setupControls(state, onDirectionChange) {
     }
   };
 
-  // Touch MOVE - detect swipe direction
+  // Touch MOVE - detect swipe direction (ONLY on game area)
   const handleTouchMove = (e) => {
-    if (e.touches.length === 1 && !swipeDetected) {
+    if (e.touches.length === 1 && onGameArea && !swipeDetected) {
       const touch = e.touches[0];
       const dx = touch.clientX - startX;
       const dy = touch.clientY - startY;
@@ -51,19 +62,26 @@ export function setupControls(state, onDirectionChange) {
         } else {
           swipeDirection = dy > 0 ? 'down' : 'up';
         }
+        
+        // Prevent scroll ONLY on game area
+        if (e.cancelable) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
       }
       
-      // Prevent default if swiping to stop scroll
+      // Prevent default if swiping
       if (isSwiping && e.cancelable) {
         e.preventDefault();
         e.stopPropagation();
       }
     }
+    // Allow normal scroll outside game area
   };
 
   // Touch END - trigger direction change
   const handleTouchEnd = (e) => {
-    if (isSwiping && swipeDirection && !swipeDetected) {
+    if (onGameArea && isSwiping && swipeDirection && !swipeDetected) {
       const touchDuration = Date.now() - touchStartTime;
       
       // Only quick swipes (< 500ms)
