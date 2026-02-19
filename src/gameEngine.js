@@ -95,7 +95,6 @@ function startGame() {
   if (gameInterval) cancelAnimationFrame(gameInterval);
   lastMoveTime = performance.now();
   showStartScreen(false);
-  setGameRunning(true); // Enable swipe controls
   gameInterval = requestAnimationFrame(gameLoop);
 }
 
@@ -179,7 +178,6 @@ function gameLoop(now) {
           }
           
           // Pass new achievements to showGameOver
-          setGameRunning(false); // Disable swipe controls
           showGameOver(gameState.score, startGame, newAchievements).catch(err => console.error('showGameOver error:', err));
         }
       });
