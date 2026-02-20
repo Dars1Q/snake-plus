@@ -265,7 +265,11 @@ function updateMechanics(state) {
     state.onIce = true;
   }
   
-  // Apply ice speed boost if active
+  // Apply ice speed boost if timer is still active
+  // Reset speed to base first
+  state.speed = state.baseSpeed;
+  
+  // Then apply ice boost if active
   if (now < state.iceBoostEndTime) {
     state.speed = state.baseSpeed * ICE_SPEED_MULTIPLIER;
   } else {
