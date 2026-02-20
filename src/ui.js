@@ -380,22 +380,30 @@ function renderShop() {
   const shopList = document.getElementById('shop-list');
   const starsInfo = document.getElementById('shop-stars');
   if (!shopList) return;
-  
-  const currentState = getGameState();
-  const currentStars = currentState && currentState.stars ? Math.floor(currentState.stars) : Number(localStorage.getItem('snakeplus_stars') || 0);
-  const unlockedSkins = currentState && currentState.unlockedSkins ? currentState.unlockedSkins : JSON.parse(localStorage.getItem('snakeplus_skins') || '["#2ecc40"]');
-  
+
+  // Get stars from localStorage (works even when not in game)
+  const currentStars = Number(localStorage.getItem('snakeplus_stars') || 0);
+  // Get unlocked skins from localStorage
+  let unlockedSkins = ['#2ecc40'];
+  try {
+    const stored = localStorage.getItem('snakeplus_skins');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) unlockedSkins = parsed;
+    }
+  } catch(e) {}
+
   if (starsInfo) starsInfo.textContent = currentStars;
-  
+
   const lang = translations[currentLanguage];
 
   shopList.innerHTML = SKINS_CATALOG.map(skin => {
     const owned = unlockedSkins.includes(skin.color);
     const canAfford = currentStars >= skin.price;
-    const btnText = owned 
-      ? (currentLanguage === 'ru' ? 'Куплено' : 'Owned') 
-      : (skin.price === 0 
-          ? (currentLanguage === 'ru' ? 'Выбрано' : 'Selected') 
+    const btnText = owned
+      ? (currentLanguage === 'ru' ? 'Куплено' : 'Owned')
+      : (skin.price === 0
+          ? (currentLanguage === 'ru' ? 'Выбрано' : 'Selected')
           : skin.price + ' ⭐');
     const disabled = owned || !canAfford;
     const skinDisplayName = lang.skins[skin.name] || skin.name;
@@ -408,21 +416,48 @@ function renderShop() {
       </div>
     `;
   }).join('');
-  
-  
+
+
   Array.from(shopList.querySelectorAll('.shop-btn:not(:disabled)')).forEach(btn => {
     btn.addEventListener('click', () => {
       const color = btn.getAttribute('data-color');
-      const state = getGameState();
-      if (state) {
-        const result = buySkinFromCatalog(state, color);
-        if (result.success) {
-          alert(result.message);
-          renderShop();
-        } else {
-          alert(result.message);
-        }
+      const price = parseInt(btn.getAttribute('data-price'));
+      
+      // Buy skin using localStorage data
+      let stars = Number(localStorage.getItem('snakeplus_stars') || 0);
+      let unlocked = [];
+      try {
+        const stored = localStorage.getItem('snakeplus_skins');
+        if (stored) unlocked = JSON.parse(stored);
+      } catch(e) { unlocked = ['#2ecc40']; }
+      
+      if (unlocked.includes(color)) {
+        alert(currentLanguage === 'ru' ? 'Уже куплено!' : 'Already owned!');
+        return;
       }
+      
+      if (stars < price) {
+        alert(currentLanguage === 'ru' ? 'Недостаточно звёзд!' : 'Not enough stars!');
+        return;
+      }
+      
+      // Deduct stars and add skin
+      stars -= price;
+      unlocked.push(color);
+      
+      localStorage.setItem('snakeplus_stars', String(stars));
+      localStorage.setItem('snakeplus_skins', JSON.stringify(unlocked));
+      
+      alert(currentLanguage === 'ru' ? '✅ Куплено!' : '✅ Purchased!');
+      
+      // Update stars display
+      if (starsInfo) starsInfo.textContent = stars;
+      
+      // Re-render shop
+      renderShop();
+      
+      // Dispatch event to update UI if game is running
+      try { window.dispatchEvent(new CustomEvent('skinsUpdated', { detail: { unlocked, stars } })); } catch(e) {}
     });
   });
 }
