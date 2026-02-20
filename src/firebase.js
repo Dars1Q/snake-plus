@@ -14,14 +14,13 @@ import {
 // ============================================
 // FIREBASE CONFIGURATION
 // ============================================
-// TODO: Replace with your actual Firebase config from console.firebase.google.com
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "snake-plus.firebaseapp.com",
-  projectId: "snake-plus",
-  storageBucket: "snake-plus.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456"
+  apiKey: "AIzaSyCz1y6iiSlg83iaJtQ2WOJ-XA5dAcM6bq8",
+  authDomain: "snakeplus-df162.firebaseapp.com",
+  projectId: "snakeplus-df162",
+  storageBucket: "snakeplus-df162.firebasestorage.app",
+  messagingSenderId: "267857364718",
+  appId: "1:267857364718:web:1834d21c04bdb1a6da55ff"
 };
 
 // Initialize Firebase
@@ -31,7 +30,7 @@ let db = null;
 try {
   app = initializeApp(firebaseConfig);
   db = getFirestore(app);
-  console.log('✅ Firebase initialized');
+  console.log('✅ Firebase initialized successfully');
 } catch (error) {
   console.error('❌ Firebase initialization error:', error);
 }
