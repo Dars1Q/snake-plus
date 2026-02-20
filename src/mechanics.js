@@ -3,11 +3,13 @@
 
 const GRID_SIZE = 20;
 const BASE_SPEED = 5; // cells/sec
-const SPEED_INCREASE_FOOD = 5;
-const COMBO_WINDOW = 2500; // ms
+const SPEED_INCREASE_FOOD = 8; // eat 8 foods to speed up
+const COMBO_WINDOW = 3500; // ms
 const BONUS_FOOD_CHANCE = 0.12;
 const ICE_TILE_CHANCE = 0.02;
 const ICE_RESPAWN_DELAY = 4000;
+const ICE_SPEED_MULTIPLIER = 2.0; // 2x speed on ice
+const ICE_DURATION = 2000; // 2 seconds ice effect
 
 // Booster types and configuration
 const BOOSTERS = {
@@ -191,6 +193,10 @@ function getInitialState() {
     pendingIceRespawns: [],
     speed: BASE_SPEED,
     baseSpeed: BASE_SPEED, // Store base speed for booster reset
+    onIce: false, // Currently on ice tile
+    iceSpeedBoost: false, // Ice speed boost active
+    baseSpeedBeforeIce: BASE_SPEED, // Speed before ice boost
+    iceBoostEndTime: 0, // When ice boost expires
     gameOver: false,
     lastFoodTime: performance.now(),
     lastEventFood: false,
@@ -208,6 +214,29 @@ function updateMechanics(state) {
   // Reset event flags for this tick
   state.lastEventFood = false;
   state.lastEventIceBreak = false;
+
+  // Check if on ice tile (apply 2x speed for 2 seconds)
+  const head = state.snake[0];
+  const onIce = state.iceTiles.some(tile => tile.x === head[0] && tile.y === head[1]);
+  
+  if (onIce && !state.onIce) {
+    // Just stepped on ice - apply speed boost
+    state.onIce = true;
+    state.iceSpeedBoost = true;
+    state.baseSpeedBeforeIce = state.baseSpeed;
+    state.speed = state.speed * ICE_SPEED_MULTIPLIER;
+    state.iceBoostEndTime = performance.now() + ICE_DURATION;
+    state.lastEventIceBreak = true;
+  }
+  
+  // Check if ice boost expired
+  if (state.iceSpeedBoost && performance.now() > state.iceBoostEndTime) {
+    state.iceSpeedBoost = false;
+    state.onIce = false;
+    state.speed = state.baseSpeedBeforeIce || state.speed;
+  }
+  
+  state.onIce = onIce;
 
   // Direction update
   if (isOpposite(state.direction, state.nextDirection)) {
@@ -612,4 +641,4 @@ function updateSkinsOwned(count) {
   savePlayerStats(stats);
 }
 
-export { getInitialState, updateMechanics, SKINS_CATALOG, buySkinFromCatalog, getRank, RANKS, BOOSTERS, ACHIEVEMENTS, activateBooster, updateBoosters, getPlayerStats, getUnlockedAchievements, checkAchievements, updateGameStats, incrementGamesPlayed, updateSkinsOwned, savePlayerStats };
+export { getInitialState, updateMechanics, SKINS_CATALOG, buySkinFromCatalog, getRank, RANKS, BOOSTERS, ACHIEVEMENTS, activateBooster, updateBoosters, getPlayerStats, getUnlockedAchievements, checkAchievements, updateGameStats, incrementGamesPlayed, updateSkinsOwned, savePlayerStats, ICE_SPEED_MULTIPLIER, ICE_DURATION };
