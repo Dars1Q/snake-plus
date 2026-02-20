@@ -4,11 +4,11 @@
 
 ### В @BotFather:
 
-1. Откройте Telegram и найдите [@BotFather](https://t.me/botfather)
-2. Отправьте команду `/newbot`
-3. Введите имя бота (например: `Snake+ Game`)
-4. Введите username бота (должен заканчиваться на `bot`, например: `SnakePlusGameBot`)
-5. Сохраните полученный **API Token**
+1. Открой Telegram и найди [@BotFather](https://t.me/botfather)
+2. Отправь команду `/newbot`
+3. Введи имя бота (например: `Snake+ Game`)
+4. Введи username бота (должен заканчиваться на `bot`, например: `SnakePlusGameBot`)
+5. Сохрани полученный **API Token**
 
 ```
 BotFather: Use this token to access the HTTP API:
@@ -19,13 +19,12 @@ BotFather: Use this token to access the HTTP API:
 
 ### В @BotFather:
 
-1. Отправьте `/mybots`
-2. Выберите вашего бота
-3. Нажмите `Bot Settings` → `Menu Button` → `Configure Menu Button`
-4. Отправьте URL вашего приложения:
-   - Для тестов: `https://your-username.github.io/SnakePlus/`
-   - Или ваш сервер: `https://yourdomain.com/`
-5. Введите название кнопки (например: `🎮 Играть`)
+1. Отправь `/mybots`
+2. Выбери своего бота
+3. Нажми `Bot Settings` → `Menu Button` → `Configure Menu Button`
+4. Отправь URL приложения:
+   - GitHub Pages: `https://dars1q.github.io/snake-plus/`
+5. Введи название кнопки (например: `🎮 Играть`)
 
 ### Альтернативно - прямая ссылка:
 
@@ -33,91 +32,103 @@ BotFather: Use this token to access the HTTP API:
 https://t.me/YourBotName?startapp=snake
 ```
 
-## 3. Настройка сервера
+## 3. Настройка Firebase
 
-### Обновите server/.env:
+### Создай проект:
 
-```env
-TELEGRAM_BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz123456
-PORT=3000
-NODE_ENV=production
+1. Открой https://console.firebase.google.com/
+2. **Add project** → Snake+
+3. Продолжи без Google Analytics
+4. **Create project**
+
+### Включи Firestore:
+
+1. **Build** → **Firestore Database**
+2. **Create database**
+3. Выбери **Start in test mode**
+4. Выбери локацию (например `us-central`)
+5. **Enable**
+
+### Получи конфиг:
+
+1. **Project Overview** → шестерёнка → **Project settings**
+2. Scroll to **Your apps** → Click **</>** (Web icon)
+3. Register app: Snake+ Web
+4. Скопируй `firebaseConfig`
+
+### Вставь конфиг в index.html:
+
+Открой `index.html` (строка ~20) и замени:
+
+```javascript
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef123456"
+};
 ```
 
-## 4. Деплой на хостинг
+## 4. Деплой на GitHub Pages
 
-### Варианты:
+### Push кода:
 
-**Vercel/Netlify** (бесплатно):
 ```bash
-npm install -g vercel
-vercel deploy
+git add -A
+git commit -m "Deploy to GitHub Pages"
+git push origin main
 ```
 
-**Heroku**:
-```bash
-heroku create snake-plus
-git push heroku main
+### GitHub Pages включится автоматически:
+
+1. Открой **Settings** → **Pages**
+2. **Source**: Deploy from a branch
+3. **Branch**: main → **/(root)**
+4. **Save**
+
+Через 1-2 минуты сайт будет доступен по:
 ```
-
-**VPS** (DigitalOcean, Hetzner):
-```bash
-# Установка Node.js
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
-
-# Клонирование и запуск
-git clone <your-repo>
-cd SnakePlus/server
-npm install
-npm start
-
-# PM2 для работы в фоне
-npm install -g pm2
-pm2 start server.js --name snake-plus
-pm2 startup
-pm2 save
+https://your-username.github.io/snake-plus/
 ```
 
 ## 5. Проверка
 
-1. Откройте бота в Telegram
-2. Нажмите кнопку меню
+1. Открой бота в Telegram
+2. Нажми кнопку меню
 3. Игра должна загрузиться
-
-## 6. Дополнительная настройка
-
-### Inline кнопка:
-
-Отправьте @BotFather:
-```
-/setinline
-Выберите бота
-Введите URL: https://yourdomain.com/
-```
-
-### Deep links:
-
-```
-https://t.me/YourBot?start=ref123
-```
+4. Сыграй и проверь рейтинг!
 
 ---
 
 ## 🎨 Кастомизация
 
-### Цвета темы:
-
-Игра автоматически подстраивается под тему Telegram:
-- Тёмная тема → тёмный фон
-- Светлая тема → светлый фон
-
-### Название в WebApp:
+### Название бота:
 
 В @BotFather:
 ```
 /setname
-Выберите бота
-Введите: Snake+ Game
+Выбери бота
+Введи: Snake+ Game
+```
+
+### Описание бота:
+
+В @BotFather:
+```
+/setdescription
+Выбери бота
+Введи описание
+```
+
+### About:
+
+В @BotFather:
+```
+/setabouttext
+Выбери бота
+Введи: 🐍 Snake+ - Classic game with global leaderboard!
 ```
 
 ---
@@ -125,7 +136,38 @@ https://t.me/YourBot?start=ref123
 ## ✅ Чеклист
 
 - [ ] Бот создан
-- [ ] Token сохранён в .env
 - [ ] WebApp URL настроен
-- [ ] Сервер развёрнут
+- [ ] Firebase проект создан
+- [ ] Firestore включён
+- [ ] Конфиг вставлен в index.html
+- [ ] Код запушен на GitHub
+- [ ] GitHub Pages включён
 - [ ] Игра открывается в Telegram
+
+---
+
+## 🔥 Firebase Console
+
+### Проверка данных:
+
+1. Открой https://console.firebase.google.com/project/YOUR_PROJECT/firestore
+2. Коллекция `scores` должна содержать записи игроков
+3. Каждая запись: userId, username, score, rank, createdAt
+
+### Правила безопасности (позже):
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /scores/{document} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
+```
+
+---
+
+**Enjoy!** 🎮🐍
