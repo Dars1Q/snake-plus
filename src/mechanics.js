@@ -626,7 +626,23 @@ function updateGameStats(score, combo, boosterUsed) {
   // Update total score
   stats.totalScore = (stats.totalScore || 0) + score;
 
+  // Get unlocked skins and stars for sync
+  try {
+    stats.unlockedSkins = JSON.parse(localStorage.getItem('snakeplus_skins') || '["#2ecc40"]');
+    stats.totalStars = parseInt(localStorage.getItem('snakeplus_stars') || '0');
+    stats.achievements = getUnlockedAchievements();
+    stats.skinsOwned = stats.unlockedSkins.length;
+  } catch(e) {}
+
+  // Save locally
   savePlayerStats(stats);
+  
+  // Save to Firebase for cross-device sync
+  try {
+    import('./api.js').then(({ savePlayerStatsFirebase }) => {
+      savePlayerStatsFirebase(stats).catch(() => {});
+    });
+  } catch(e) {}
 }
 
 function incrementGamesPlayed() {

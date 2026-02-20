@@ -65,99 +65,131 @@ async function loadProfileData(lang) {
   const content = document.getElementById('profile-content');
 
   try {
-    // Get stats from localStorage (updated after each game)
-    const stats = getPlayerStats();
+    // Get local stats first
+    const localStats = getPlayerStats();
     const localStars = localStorage.getItem('snakeplus_stars') || '0';
     const localSkins = JSON.parse(localStorage.getItem('snakeplus_skins') || '["#2ecc40"]');
     const localScores = JSON.parse(localStorage.getItem('snakeplus_scores') || '[]');
 
-    // Get personal best from Firebase
-    let personalTop5 = localScores;
+    // Try to load from Firebase and merge
+    let finalStats = localStats;
+    let finalStars = parseInt(localStars);
+    let finalSkins = localSkins;
+    
     if (window.db) {
-      const userId = getUserId();
-      const querySnapshot = await window.db.collection('scores')
-        .where('userId', '==', userId)
-        .orderBy('score', 'desc')
-        .limit(5)
-        .get();
-      
-      if (!querySnapshot.empty) {
-        personalTop5 = [];
-        querySnapshot.forEach(doc => {
-          const data = doc.data();
-          personalTop5.push(data.score);
+      try {
+        import('./api.js').then(async ({ getPlayerStatsFirebase }) => {
+          const firebaseStats = await getPlayerStatsFirebase();
+          
+          if (firebaseStats) {
+            // Merge: take best values from both sources
+            finalStats = {
+              bestScore: Math.max(localStats.bestScore, firebaseStats.bestScore || 0),
+              maxCombo: Math.max(localStats.maxCombo, firebaseStats.maxCombo || 0),
+              totalGames: Math.max(localStats.totalGames, firebaseStats.totalGames || 0),
+              totalScore: Math.max(localStats.totalScore, firebaseStats.totalScore || 0),
+              boostersUsed: [...new Set([...localStats.boostersUsed, ...(firebaseStats.boostersUsed || [])])],
+              achievements: firebaseStats.achievements || localStats.achievements || [],
+              unlockedSkins: firebaseStats.unlockedSkins || localSkins,
+              skinsOwned: firebaseStats.unlockedSkins ? firebaseStats.unlockedSkins.length : localSkins.length,
+              totalStars: firebaseStats.totalStars || parseInt(localStars)
+            };
+            
+            // Update localStorage with merged data
+            localStorage.setItem('snakeplus_stats', JSON.stringify(finalStats));
+            localStorage.setItem('snakeplus_stars', String(finalStats.totalStars));
+            localStorage.setItem('snakeplus_skins', JSON.stringify(finalStats.unlockedSkins));
+            
+            // Re-render profile with updated data
+            renderProfileContent(finalStats, finalStats.unlockedSkins, lang);
+          }
         });
+      } catch(e) {
+        console.log('Firebase sync not available, using local data');
       }
     }
-
-    const userData = {
-      bestScore: personalTop5.length > 0 ? personalTop5[0] : (stats.bestScore || 0),
-      stars: parseInt(localStars),
-      totalStars: stats.totalStars || parseInt(localStars),
-      rank: getRank(personalTop5.length > 0 ? personalTop5[0] : 0).name,
-    };
-
-    const rank = getRank(userData.bestScore || 0);
-    const gamesPlayed = stats.totalGames || 0;
-    const avgScore = gamesPlayed > 0 && stats.totalScore ? Math.round(stats.totalScore / gamesPlayed) : 0;
-
-    content.innerHTML = `
-      <!-- Profile Header -->
-      <div style="background:linear-gradient(135deg, #1f2326 0%, #23272b 100%); border:1px solid #2ecc40; border-radius:12px; padding:20px; margin-bottom:16px; text-align:center;">
-        <div style="width:80px; height:80px; margin:0 auto 12px; border-radius:50%; background:linear-gradient(135deg, #2ecc40 0%, #27ae38 100%); display:flex; align-items:center; justify-content:center; font-size:2.5rem; box-shadow:0 4px 20px rgba(46,204,64,0.4);">🐍</div>
-        <div style="font-size:1.3rem; font-weight:bold; color:#fff; margin-bottom:4px;">${getTelegramUsername()}</div>
-        <div style="color:${rank.color}; font-size:1rem; text-shadow:0 0 10px ${rank.color}80;">🏅 ${rank.name}</div>
-      </div>
-
-      <!-- Stats Grid -->
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
-        <div style="background:#141618; border:1px solid #2ecc40; border-radius:10px; padding:16px; text-align:center;">
-          <div style="font-size:0.8rem; color:#6ab878; margin-bottom:8px;">🎮 ${lang.gamesPlayed}</div>
-          <div style="font-size:1.8rem; font-weight:bold; color:#fff;">${gamesPlayed}</div>
-        </div>
-        <div style="background:#141618; border:1px solid #2ecc40; border-radius:10px; padding:16px; text-align:center;">
-          <div style="font-size:0.8rem; color:#6ab878; margin-bottom:8px;">⭐ ${lang.totalStars}</div>
-          <div style="font-size:1.8rem; font-weight:bold; color:#ffe066;">${userData.totalStars || userData.stars || 0}</div>
-        </div>
-        <div style="background:#141618; border:1px solid #2ecc40; border-radius:10px; padding:16px; text-align:center;">
-          <div style="font-size:0.8rem; color:#6ab878; margin-bottom:8px;">🏆 ${lang.bestScore}</div>
-          <div style="font-size:1.8rem; font-weight:bold; color:#2ecc40;">${userData.bestScore || 0}</div>
-        </div>
-        <div style="background:#141618; border:1px solid #2ecc40; border-radius:10px; padding:16px; text-align:center;">
-          <div style="font-size:0.8rem; color:#6ab878; margin-bottom:8px;">🎨 ${lang.skinsOwned || 'Skins'}</div>
-          <div style="font-size:1.8rem; font-weight:bold; color:#3498db;">${localSkins.length}</div>
-        </div>
-      </div>
-
-      <!-- Top 5 Personal Games -->
-      <div style="background:#141618; border:1px solid #2ecc40; border-radius:12px; padding:16px;">
-        <h3 style="margin:0 0 12px 0; color:#2ecc40; font-size:1.1rem;">🎯 Top 5 Personal</h3>
-        ${personalTop5.length > 0
-          ? personalTop5.slice(0, 5).map((s, i) => {
-              const gameRank = getRank(s);
-              return `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:${i < Math.min(personalTop5.length, 5) - 1 ? '1px solid #2a2d31' : 'none'};">
-                  <div style="display:flex; align-items:center; gap:10px;">
-                    <span style="color:#ffe066; font-weight:bold; font-size:1rem; width:25px;">${i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : '#' + (i+1)))}</span>
-                    <span style="color:${gameRank.color}; font-size:0.8rem;">${gameRank.name}</span>
-                  </div>
-                  <span style="color:#2ecc40; font-weight:bold; font-size:1.1rem;">${s}</span>
-                </div>
-              `;
-            }).join('')
-          : `<div style="text-align:center; color:#666; padding:20px;">${lang.noData}</div>`
-        }
-      </div>
-    `;
+    
+    // Initial render with local data
+    renderProfileContent(finalStats, finalSkins, lang);
+    
   } catch (err) {
     console.error('Profile load error:', err);
-    content.innerHTML = `
-      <div style="text-align:center; padding:40px; color:#666;">
-        <div style="font-size:3rem; margin-bottom:20px;">❌</div>
-        <div>${lang.noData}</div>
-      </div>
-    `;
+    const content = document.getElementById('profile-content');
+    if (content) {
+      content.innerHTML = `
+        <div style="text-align:center; padding:40px; color:#666;">
+          <div style="font-size:3rem; margin-bottom:20px;">❌</div>
+          <div>${lang.noData}</div>
+        </div>
+      `;
+    }
   }
+}
+
+function renderProfileContent(stats, skins, lang) {
+  const content = document.getElementById('profile-content');
+  if (!content) return;
+  
+  const localScores = JSON.parse(localStorage.getItem('snakeplus_scores') || '[]');
+  
+  const userData = {
+    bestScore: stats.bestScore || 0,
+    stars: stats.totalStars || 0,
+    totalStars: stats.totalStars || 0,
+    rank: getRank(stats.bestScore).name,
+  };
+
+  const rank = getRank(userData.bestScore || 0);
+  const gamesPlayed = stats.totalGames || 0;
+
+  content.innerHTML = `
+    <!-- Profile Header -->
+    <div style="background:linear-gradient(135deg, #1f2326 0%, #23272b 100%); border:1px solid #2ecc40; border-radius:12px; padding:20px; margin-bottom:16px; text-align:center;">
+      <div style="width:80px; height:80px; margin:0 auto 12px; border-radius:50%; background:linear-gradient(135deg, #2ecc40 0%, #27ae38 100%); display:flex; align-items:center; justify-content:center; font-size:2.5rem; box-shadow:0 4px 20px rgba(46,204,64,0.4);">🐍</div>
+      <div style="font-size:1.3rem; font-weight:bold; color:#fff; margin-bottom:4px;">${getTelegramUsername()}</div>
+      <div style="color:${rank.color}; font-size:1rem; text-shadow:0 0 10px ${rank.color}80;">🏅 ${rank.name}</div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+      <div style="background:#141618; border:1px solid #2ecc40; border-radius:10px; padding:16px; text-align:center;">
+        <div style="font-size:0.8rem; color:#6ab878; margin-bottom:8px;">🎮 ${lang.gamesPlayed}</div>
+        <div style="font-size:1.8rem; font-weight:bold; color:#fff;">${gamesPlayed}</div>
+      </div>
+      <div style="background:#141618; border:1px solid #2ecc40; border-radius:10px; padding:16px; text-align:center;">
+        <div style="font-size:0.8rem; color:#6ab878; margin-bottom:8px;">⭐ ${lang.totalStars}</div>
+        <div style="font-size:1.8rem; font-weight:bold; color:#ffe066;">${userData.totalStars || 0}</div>
+      </div>
+      <div style="background:#141618; border:1px solid #2ecc40; border-radius:10px; padding:16px; text-align:center;">
+        <div style="font-size:0.8rem; color:#6ab878; margin-bottom:8px;">🏆 ${lang.bestScore}</div>
+        <div style="font-size:1.8rem; font-weight:bold; color:#2ecc40;">${userData.bestScore || 0}</div>
+      </div>
+      <div style="background:#141618; border:1px solid #2ecc40; border-radius:10px; padding:16px; text-align:center;">
+        <div style="font-size:0.8rem; color:#6ab878; margin-bottom:8px;">🎨 ${lang.skinsOwned || 'Skins'}</div>
+        <div style="font-size:1.8rem; font-weight:bold; color:#3498db;">${skins.length}</div>
+      </div>
+    </div>
+
+    <!-- Top 5 Personal Games -->
+    <div style="background:#141618; border:1px solid #2ecc40; border-radius:12px; padding:16px;">
+      <h3 style="margin:0 0 12px 0; color:#2ecc40; font-size:1.1rem;">🎯 Top 5 Personal</h3>
+      ${localScores.length > 0
+        ? localScores.slice(0, 5).map((s, i) => {
+            const gameRank = getRank(s);
+            return `
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:${i < Math.min(localScores.length, 5) - 1 ? '1px solid #2a2d31' : 'none'};">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <span style="color:#ffe066; font-weight:bold; font-size:1rem; width:25px;">${i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : '#' + (i+1)))}</span>
+                  <span style="color:${gameRank.color}; font-size:0.8rem;">${gameRank.name}</span>
+                </div>
+                <span style="color:#2ecc40; font-weight:bold; font-size:1.1rem;">${s}</span>
+              </div>
+            `;
+          }).join('')
+        : `<div style="text-align:center; color:#666; padding:20px;">${lang.noData}</div>`
+    }
+    </div>
+  `;
 }
 
 function getTelegramUsername() {

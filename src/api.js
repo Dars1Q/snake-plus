@@ -157,4 +157,72 @@ export async function updateStars(stars, totalStars) {
   return { success: true };
 }
 
+// Save player stats to Firebase (for cross-device sync)
+export async function savePlayerStatsFirebase(stats) {
+  if (!window.db) {
+    console.log('Firebase not ready, saving locally only');
+    return { success: false, error: 'Firebase not ready' };
+  }
+
+  try {
+    const userId = getUserId();
+    const username = getUsername();
+
+    // Save to Firebase
+    await window.db.collection('playerStats').doc(userId).set({
+      userId: userId,
+      username: username,
+      bestScore: stats.bestScore || 0,
+      maxCombo: stats.maxCombo || 0,
+      totalGames: stats.totalGames || 0,
+      totalScore: stats.totalScore || 0,
+      boostersUsed: stats.boostersUsed || [],
+      skinsOwned: stats.skinsOwned || 0,
+      totalStars: stats.totalStars || 0,
+      achievements: stats.achievements || [],
+      unlockedSkins: stats.unlockedSkins || [],
+      lastPlayed: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    console.log('✅ Player stats saved to Firebase');
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Error saving player stats:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Get player stats from Firebase
+export async function getPlayerStatsFirebase() {
+  if (!window.db) {
+    return null;
+  }
+
+  try {
+    const userId = getUserId();
+    const doc = await window.db.collection('playerStats').doc(userId).get();
+
+    if (doc.exists) {
+      const data = doc.data();
+      console.log('✅ Player stats loaded from Firebase');
+      return {
+        bestScore: data.bestScore || 0,
+        maxCombo: data.maxCombo || 0,
+        totalGames: data.totalGames || 0,
+        totalScore: data.totalScore || 0,
+        boostersUsed: data.boostersUsed || [],
+        skinsOwned: data.skinsOwned || 0,
+        totalStars: data.totalStars || 0,
+        achievements: data.achievements || [],
+        unlockedSkins: data.unlockedSkins || []
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('❌ Error loading player stats:', error);
+    return null;
+  }
+}
+
 export { getUserId, getUsername };
