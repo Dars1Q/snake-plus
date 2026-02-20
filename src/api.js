@@ -124,4 +124,25 @@ export async function getUserData() {
   };
 }
 
+// Get user scores (local only)
+export async function getUserScores(limit = 10) {
+  const scores = JSON.parse(localStorage.getItem('snakeplus_scores') || '[]');
+  return { success: true, scores: scores.slice(0, limit) };
+}
+
+// Get user best score (local only)
+export async function getUserBestScore() {
+  const scores = JSON.parse(localStorage.getItem('snakeplus_scores') || '[]');
+  return { 
+    success: true, 
+    bestScore: scores.length > 0 ? { best_score: scores[0] } : null 
+  };
+}
+
+// Update user stars (local only)
+export async function updateStars(stars, totalStars) {
+  localStorage.setItem('snakeplus_stars', String(stars));
+  return { success: true };
+}
+
 export { getUserId, getUsername };
