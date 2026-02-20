@@ -3,18 +3,32 @@ import { API_URL } from './config.js';
 
 const API_BASE_URL = API_URL || 'http://localhost:3000/api';
 
-// Get Telegram user ID
+// Get Telegram user ID - ALWAYS use Telegram ID when available
 function getUserId() {
+  // Priority 1: Telegram User ID (most reliable)
   if (window.Telegram && window.Telegram.WebApp) {
     const user = window.Telegram.WebApp.initDataUnsafe?.user;
-    if (user) {
-      return String(user.id);
+    if (user && user.id) {
+      const tgId = String(user.id);
+      // Save to localStorage for consistency
+      localStorage.setItem('snakeplus_userId', tgId);
+      return tgId;
     }
   }
-  // Fallback to localStorage
+  
+  // Priority 2: Check if we have Telegram user data in localStorage
+  try {
+    const tgUser = JSON.parse(localStorage.getItem('snakeplus_telegram_user') || '{}');
+    if (tgUser && tgUser.id) {
+      return String(tgUser.id);
+    }
+  } catch(e) {}
+  
+  // Priority 3: Use stored userId from localStorage
   let id = localStorage.getItem('snakeplus_userId');
   if (!id) {
-    id = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    // Fallback: generate anonymous ID (this will be different per device)
+    id = 'anon_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     localStorage.setItem('snakeplus_userId', id);
   }
   return id;
