@@ -76,15 +76,15 @@ export async function saveScore(score, rank, telegramUser = null) {
   const userId = getUserId();
   const username = getUsername();
   const language = localStorage.getItem('snakeplus_language') || 'en';
-  
+
   // Get fresh Telegram user data
   let tgUser = telegramUser;
   if (!tgUser && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) {
     tgUser = window.Telegram.WebApp.initDataUnsafe.user;
   }
-  
+
   console.log('Saving score:', { userId, username, score, rank, hasTgUser: !!tgUser });
-  
+
   return apiRequest('/score', {
     method: 'POST',
     body: JSON.stringify({
@@ -94,6 +94,30 @@ export async function saveScore(score, rank, telegramUser = null) {
       rank,
       language,
       telegramUser: tgUser,
+    }),
+  });
+}
+
+// Save player stats to server for cross-device sync
+export async function savePlayerStatsToServer(stats) {
+  const userId = getUserId();
+  const username = getUsername();
+  
+  console.log('Saving player stats:', { userId, username, stats });
+  
+  return apiRequest('/user/' + userId + '/stats', {
+    method: 'POST',
+    body: JSON.stringify({
+      userId,
+      username,
+      stats: {
+        bestScore: stats.bestScore,
+        maxCombo: stats.maxCombo,
+        totalGames: stats.totalGames,
+        boostersUsed: stats.boostersUsed,
+        skinsOwned: stats.skinsOwned,
+        totalStars: stats.totalStars,
+      },
     }),
   });
 }

@@ -567,27 +567,35 @@ function checkAchievements() {
 
 function updateGameStats(score, combo, boosterUsed) {
   const stats = getPlayerStats();
-  
+
   // Update best score
   if (score > stats.bestScore) {
     stats.bestScore = score;
   }
-  
+
   // Update max combo
   if (combo > stats.maxCombo) {
     stats.maxCombo = combo;
   }
-  
+
   // Track booster usage
   if (boosterUsed && !stats.boostersUsed.includes(boosterUsed)) {
     stats.boostersUsed.push(boosterUsed);
   }
-  
+
   // Update total games and score
   stats.totalGames++;
   stats.totalScore = (stats.totalScore || 0) + score;
-  
+
   savePlayerStats(stats);
+  
+  // Also save to server for cross-device sync (if available)
+  try {
+    // Import dynamically to avoid circular dependency
+    import('./api.js').then(({ savePlayerStatsToServer }) => {
+      savePlayerStatsToServer(stats).catch(() => {});
+    });
+  } catch(e) {}
 }
 
 function incrementGamesPlayed() {
@@ -602,4 +610,4 @@ function updateSkinsOwned(count) {
   savePlayerStats(stats);
 }
 
-export { getInitialState, updateMechanics, SKINS_CATALOG, buySkinFromCatalog, getRank, RANKS, BOOSTERS, ACHIEVEMENTS, activateBooster, updateBoosters, getPlayerStats, getUnlockedAchievements, checkAchievements, updateGameStats, incrementGamesPlayed, updateSkinsOwned };
+export { getInitialState, updateMechanics, SKINS_CATALOG, buySkinFromCatalog, getRank, RANKS, BOOSTERS, ACHIEVEMENTS, activateBooster, updateBoosters, getPlayerStats, getUnlockedAchievements, checkAchievements, updateGameStats, incrementGamesPlayed, updateSkinsOwned, savePlayerStats };
