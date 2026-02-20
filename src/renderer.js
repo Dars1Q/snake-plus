@@ -230,8 +230,22 @@ export function renderGame(state) {
       ctx.globalAlpha = a;
       ctx.translate(x + cellSize / 2, y + cellSize / 2);
       ctx.scale(scale, scale);
+      
+      // Ice tile background
       ctx.fillStyle = '#7fdfff';
       ctx.fillRect(-cellSize / 2, -cellSize / 2, cellSize, cellSize);
+      
+      // Ice shine effect
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.fillRect(-cellSize / 2, -cellSize / 2, cellSize / 2, cellSize / 2);
+      
+      // Direction arrows (show which way snake will slide)
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.font = `${cellSize * 0.4}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('➤', 0, 0);
+      
       ctx.restore();
       // when tile starts despawning, create spark particles once
       if (tile.despawnTime) {
