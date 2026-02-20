@@ -10,6 +10,28 @@
   <title>Snake+ Telegram Mini App</title>
   <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAsTAAALEwEAmpwYAAABN0lEQVR4nO2WQUoDQRBFa3QhiOABvIB6AA/gCbyCRxDxAK7cuXHrTkEQQRDBhRtFEMSFIAgiKP5AQRjHpKu7Zyb9oKGZma761e+qbsiyjP+8MoAbYAqMA3NgBtwCE+AK6ABZSv0R0ANmwBJYAyvgHfgCPoF34AW4Bk6jAzjXADaBCfAEvG0A+NxrYBc4iQZwBtwBb8AG+NkC8Ln3wHY0gHPgAfj+B4DvfQAuogGcAo8/APzcZ+AkGkAfeN0AwPdOowFcAi9bAHjvEjgPGNkDXrcA8N59YC8awAXwtAHgc58C1p4DT98A+NwJ0I4G0AXmGwB87zPQjgbQAz42APjee6ATDaAPfG4A8L0PwH40gAHwvgGA7x0Bh9EAhsCqBsDvjYCjaACj+I+2APjeN+AwYOQIWNUA+L3PwEHAyBGwrgHwvXNgPxrACbCqAfC9L0A7GsAp8F0D4Huf9J8gGsAlMK8B8L0vwFk0gEvgqwbA9z4DF9EA+sC6BsD3TvWfNxrAAPiuAfC9b8BBwIXoA581AL73BWhHA7gAvmsAfO8UaEcDuAK+agB87xS4jgZwoyuZO6F/tW4JjLU35yH+AMfJfhB/ANwRAAAAAElFTkSuQmCC" />
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  
+  <script>
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCz1y6iiSlg83iaJtQ2WOJ-XA5dAcM6bq8",
+      authDomain: "snakeplus-df162.firebaseapp.com",
+      projectId: "snakeplus-df162",
+      storageBucket: "snakeplus-df162.firebasestorage.app",
+      messagingSenderId: "267857364718",
+      appId: "1:267857364718:web:1834d21c04bdb1a6da55ff"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    window.firebase = firebase;
+    window.db = firebase.firestore();
+    console.log('✅ Firebase initialized');
+  </script>
+  
   <link rel="stylesheet" href="styles.css" id="css-link" />
   <script type="module" src="src/gameEngine.js" id="game-script"></script>
 
