@@ -75,9 +75,11 @@ async function loadProfileData(lang) {
     let finalStats = localStats;
     let finalStars = parseInt(localStars);
     let finalSkins = localSkins;
+    let personalTop5 = localScores;
     
     if (window.db) {
       try {
+        // Load player stats from Firebase
         import('./api.js').then(async ({ getPlayerStatsFirebase }) => {
           const firebaseStats = await getPlayerStatsFirebase();
           
@@ -100,8 +102,26 @@ async function loadProfileData(lang) {
             localStorage.setItem('snakeplus_stars', String(finalStats.totalStars));
             localStorage.setItem('snakeplus_skins', JSON.stringify(finalStats.unlockedSkins));
             
+            // Load top 5 scores from Firebase
+            const querySnapshot = await window.db.collection('scores')
+              .where('userId', '==', getUserId())
+              .orderBy('score', 'desc')
+              .limit(5)
+              .get();
+            
+            if (!querySnapshot.empty) {
+              personalTop5 = [];
+              querySnapshot.forEach(doc => {
+                const data = doc.data();
+                personalTop5.push(data.score);
+              });
+            }
+            
             // Re-render profile with updated data
-            renderProfileContent(finalStats, finalStats.unlockedSkins, lang);
+            renderProfileContent(finalStats, finalStats.unlockedSkins, personalTop5, lang);
+          } else {
+            // No Firebase data, render with local
+            renderProfileContent(finalStats, finalSkins, personalTop5, lang);
           }
         });
       } catch(e) {
@@ -110,7 +130,7 @@ async function loadProfileData(lang) {
     }
     
     // Initial render with local data
-    renderProfileContent(finalStats, finalSkins, lang);
+    renderProfileContent(finalStats, finalSkins, personalTop5, lang);
     
   } catch (err) {
     console.error('Profile load error:', err);
@@ -126,11 +146,9 @@ async function loadProfileData(lang) {
   }
 }
 
-function renderProfileContent(stats, skins, lang) {
+function renderProfileContent(stats, skins, top5Scores, lang) {
   const content = document.getElementById('profile-content');
   if (!content) return;
-  
-  const localScores = JSON.parse(localStorage.getItem('snakeplus_scores') || '[]');
   
   const userData = {
     bestScore: stats.bestScore || 0,
@@ -173,11 +191,11 @@ function renderProfileContent(stats, skins, lang) {
     <!-- Top 5 Personal Games -->
     <div style="background:#141618; border:1px solid #2ecc40; border-radius:12px; padding:16px;">
       <h3 style="margin:0 0 12px 0; color:#2ecc40; font-size:1.1rem;">🎯 Top 5 Personal</h3>
-      ${localScores.length > 0
-        ? localScores.slice(0, 5).map((s, i) => {
+      ${top5Scores && top5Scores.length > 0
+        ? top5Scores.slice(0, 5).map((s, i) => {
             const gameRank = getRank(s);
             return `
-              <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:${i < Math.min(localScores.length, 5) - 1 ? '1px solid #2a2d31' : 'none'};">
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:${i < Math.min(top5Scores.length, 5) - 1 ? '1px solid #2a2d31' : 'none'};">
                 <div style="display:flex; align-items:center; gap:10px;">
                   <span style="color:#ffe066; font-weight:bold; font-size:1rem; width:25px;">${i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : '#' + (i+1)))}</span>
                   <span style="color:${gameRank.color}; font-size:0.8rem;">${gameRank.name}</span>
