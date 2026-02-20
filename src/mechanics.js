@@ -725,4 +725,4 @@ function updateSkinsOwned(count) {
   savePlayerStats(stats);
 }
 
-export { getInitialState, updateMechanics, SKINS_CATALOG, buySkinFromCatalog, getRank, RANKS, BOOSTERS, ACHIEVEMENTS, activateBooster, updateBoosters, getPlayerStats, getUnlockedAchievements, checkAchievements, updateGameStats, incrementGamesPlayed, updateSkinsOwned, savePlayerStats, ICE_SPEED_MULTIPLIER, ICE_DURATION };
+export { getInitialState, updateMechanics, SKINS_CATALOG, buySkinFromCatalog, getRank, RANKS, BOOSTERS, ACHIEVEMENTS, activateBooster, updateBoosters, getPlayerStats, getUnlockedAchievements, checkAchievements, updateGameStats, incrementGamesPlayed, updateSkinsOwned, savePlayerStats, ICE_SPEED_MULTIPLIER, ICE_DURATION, BOOSTER_DESPAWN_TIME, BOOSTER_RESPAWN_TIME, BOOSTER_SPAWN_CHANCE };

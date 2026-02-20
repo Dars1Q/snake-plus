@@ -1,6 +1,6 @@
 // renderer.js
 // Handles all Canvas drawing with enhanced particle effects
-import { BOOSTERS } from './mechanics.js';
+import { BOOSTERS, BOOSTER_DESPAWN_TIME } from './mechanics.js';
 
 let ctx, canvas;
 // particles for despawning ice tiles, keyed by "x,y"
