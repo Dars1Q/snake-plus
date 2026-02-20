@@ -85,14 +85,10 @@ function initTelegram() {
   loadTheme();
 }
 
-// Check server availability on load
+// Check Firebase availability on load
 async function checkServer() {
-  if (ONLINE_MODE) {
-    serverAvailable = await isServerAvailable();
-    console.log('Server available:', serverAvailable);
-  } else {
-    serverAvailable = false;
-  }
+  serverAvailable = await isServerAvailable();
+  console.log('Firebase available:', serverAvailable);
 }
 
 function startGame() {

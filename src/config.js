@@ -1,17 +1,13 @@
 // config.js - Game Configuration
 const CONFIG = {
-  // Set to true to use online backend, false for offline (localStorage)
+  // Firebase mode (always true now)
   ONLINE_MODE: true,
-
-  // API Base URL (used when ONLINE_MODE is true)
-  // Railway/Render URL
-  API_URL: 'https://snake-plus-server.onrender.com/api',
 
   // Game settings
   GRID_SIZE: 20,
-  BASE_SPEED: 5,
+  BASE_SPEED: 5, // cells/sec
   SPEED_INCREASE_FOOD: 5,
-  COMBO_WINDOW: 2500,
+  COMBO_WINDOW: 2500, // ms
   BONUS_FOOD_CHANCE: 0.12,
   ICE_TILE_CHANCE: 0.02,
   ICE_RESPAWN_DELAY: 4000,
@@ -24,7 +20,6 @@ const CONFIG = {
 // Export individual values for convenience
 export const {
   ONLINE_MODE,
-  API_URL,
   GRID_SIZE,
   BASE_SPEED,
   SPEED_INCREASE_FOOD,
