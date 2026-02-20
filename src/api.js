@@ -63,25 +63,37 @@ export async function getLeaderboard(limitCount = 50) {
   }
 
   try {
+    // Get all scores
     const querySnapshot = await window.db.collection('scores')
       .orderBy('score', 'desc')
-      .limit(limitCount)
       .get();
 
-    const leaderboard = [];
+    // Group by userId and keep only best score per user
+    const bestScores = new Map();
+    
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      leaderboard.push({
-        id: doc.id,
-        userId: data.userId,
-        username: data.username,
-        score: data.score,
-        rank: data.rank,
-        telegram_user: data.telegram_user,
-        language: data.language,
-        createdAt: data.createdAt
-      });
+      const userId = data.userId;
+      
+      // Keep only the best score for each user
+      if (!bestScores.has(userId) || data.score > bestScores.get(userId).score) {
+        bestScores.set(userId, {
+          id: doc.id,
+          userId: userId,
+          username: data.username,
+          score: data.score,
+          rank: data.rank,
+          telegram_user: data.telegram_user,
+          language: data.language,
+          createdAt: data.createdAt
+        });
+      }
     });
+
+    // Convert to array and sort by score
+    const leaderboard = Array.from(bestScores.values())
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limitCount);
 
     console.log('✅ Leaderboard loaded:', leaderboard.length, 'players');
     return { success: true, leaderboard };
