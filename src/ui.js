@@ -503,7 +503,7 @@ window.addEventListener('skinsUpdated', function(ev) {
 async function showGameOver(score, restartCallback, newAchievements = []) {
   const ui = document.getElementById('ui');
   const scores = await updateLeaderboard(score);
-  const place = Array.isArray(scores) ? (scores.indexOf(score) + 1) : 1;
+  const place = Array.isArray(scores) && scores.length > 0 ? (scores.indexOf(score) + 1) : 1;
   const lang = translations[currentLanguage];
   const rank = getRank(score);
 
@@ -517,10 +517,10 @@ async function showGameOver(score, restartCallback, newAchievements = []) {
       <div style="margin:10px 0; font-size:1rem; color: #fff;">🏅 ${rank.name}</div>
       <div style="margin:10px 0; font-size:1rem; color: #fff;">${lang.place}: <b style="color:#ffe066; text-shadow:0 0 10px rgba(255,224,102,0.5);">#${place > 0 ? place : '?'}</b></div>
     </div>
-    
+
     ${newAchievements.length > 0 ? `
       <div style="width:100%; max-width:380px; background:linear-gradient(135deg, #1f2326 0%, #23272b 100%); border:2px solid #f1c40f; border-radius:10px; padding:16px; margin:12px 0; animation: slideIn 0.5s ease-out; box-shadow:0 0 20px rgba(241,196,15,0.3);">
-        <h3 style="text-align:center; margin:0 0 12px 0; color:#f1c40f; font-size:1.1rem;">🎉 New Achievements!</h3>
+        <h4 style="text-align:center; margin:0 0 12px 0; color:#f1c40f; font-size:1.1rem;">🎉 New Achievements!</h4>
         ${newAchievements.map(ach => `
           <div style="display:flex; align-items:center; gap:10px; padding:10px; margin:6px 0; background:#141618; border-radius:8px; border:1px solid ${ach.rarity === 'legendary' ? '#f1c40f' : (ach.rarity === 'epic' ? '#9b59b6' : '#3498db')};">
             <div style="font-size:1.8rem;">${ach.icon}</div>
@@ -533,9 +533,9 @@ async function showGameOver(score, restartCallback, newAchievements = []) {
         `).join('')}
       </div>
     ` : ''}
-    
+
     <div style="width:100%; max-width:380px; background:#141618; border:1px solid #2ecc40; border-radius:8px; padding:16px; margin:12px 0; animation: slideIn 0.5s ease-out;">
-      <h3 style="text-align:center; margin-top:0;">🎨 ${lang.yourSkins}</h3>
+      <h4 style="text-align:center; margin-top:0;">🎨 ${lang.yourSkins}</h4>
       <div id="skins-list" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;"></div>
     </div>
     <div style="display:flex; flex-direction:column; gap:10px; width:100%; max-width:380px; margin-top:16px; animation: slideIn 0.6s ease-out;">
@@ -549,22 +549,22 @@ async function showGameOver(score, restartCallback, newAchievements = []) {
   renderSkins();
   document.getElementById('restart-btn').onclick = restartCallback;
   document.getElementById('menu-btn').onclick = () => showStartScreen(true, restartCallback);
-  
+
   // Share button - Telegram integration
   const shareBtn = document.getElementById('share-btn');
   if (shareBtn) {
     shareBtn.onclick = (e) => {
       e.preventDefault();
       e.stopPropagation();
-      
+
       const shareMessage = `🐍 Snake+\n\n🏆 Score: ${score}\n🏅 Rank: ${rank.name}\n\nCan you beat my score? 🎮`;
 
       // Only use clipboard - prevents app closing on iOS
       copyToClipboard(shareMessage);
     };
   }
-  
-  updateLeaderboard();
+
+  // Leaderboard already rendered in first updateLeaderboard call
 }
 
 // Helper function to copy to clipboard with visual feedback
@@ -624,50 +624,51 @@ async function updateLeaderboard(newScore) {
   }
 
   const lb = document.getElementById('leaderboard');
-  if (lb) {
-    const lang = translations[currentLanguage];
-    let html = '<h3 style="margin:0 0 12px 0; text-align:center;">🏆 ' + lang.leaderboard + '</h3>';
-    
-    // Try to get online leaderboard if available
-    if (ONLINE_MODE) {
-      try {
-        const serverAvailable = await isServerAvailable();
-        if (serverAvailable) {
-          const result = await getLeaderboard(10);
-          if (result.success && result.leaderboard && result.leaderboard.length > 0) {
-            html += result.leaderboard.map(function(entry, i) {
-              const medal = i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : (i+1)));
-              const rank = getRank(entry.score);
-              // Use telegram username if available
-              let displayName = entry.username || 'Anonymous';
-              if (entry.telegram_user) {
-                try {
-                  const tgUser = JSON.parse(entry.telegram_user);
-                  displayName = tgUser.username || tgUser.first_name || displayName;
-                } catch(e) {}
-              }
-              return '<div style="padding:12px 0; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #2a2d31; transition:all 0.2s ease;"><div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:bold; color:#ffe066; min-width:30px;">' + medal + '</span><div style="text-align:left;"><div style="color:#fff; font-weight:bold; font-size:0.95rem;">' + displayName + '</div><div style="color:' + rank.color + '; font-size:0.75rem;">' + rank.name + '</div></div></div><span style="color:#ccc; font-weight:bold;">' + entry.score + '</span></div>';
-            }).join('');
-            lb.innerHTML = html;
-            return scores;
-          }
+  if (!lb) return scores;
+
+  const lang = translations[currentLanguage];
+  let html = '<h4 style="margin:0 0 12px 0; text-align:center; color: var(--accent-color);">🏆 ' + lang.leaderboard + '</h4>';
+
+  // Try to get online leaderboard if available
+  if (ONLINE_MODE) {
+    try {
+      const serverAvailable = await isServerAvailable();
+      if (serverAvailable) {
+        const result = await getLeaderboard(10);
+        if (result.success && result.leaderboard && result.leaderboard.length > 0) {
+          html += result.leaderboard.map(function(entry, i) {
+            const medal = i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : (i+1)));
+            const rank = getRank(entry.score);
+            let displayName = entry.username || 'Anonymous';
+            if (entry.telegram_user) {
+              try {
+                const tgUser = JSON.parse(entry.telegram_user);
+                displayName = tgUser.username || tgUser.first_name || displayName;
+              } catch(e) {}
+            }
+            return '<div style="padding:12px 0; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1);"><div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:bold; color:#ffe066; min-width:30px;">' + medal + '</span><div style="text-align:left;"><div style="color:#fff; font-weight:bold; font-size:0.95rem;">' + displayName + '</div><div style="color:' + rank.color + '; font-size:0.75rem;">' + rank.name + '</div></div></div><span style="color:#ccc; font-weight:bold;">' + entry.score + '</span></div>';
+          }).join('');
+          lb.innerHTML = html;
+          return scores;
         }
-      } catch (err) {
-        console.log('Online leaderboard not available, using local');
       }
+    } catch (err) {
+      console.log('Online leaderboard not available, using local');
     }
-    
-    // Fallback to local leaderboard
-    html += scores.map(function(s, i) {
-      const medal = i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : (i+1)));
-      const rank = getRank(s);
-      return '<div style="padding:12px 0; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #2a2d31; transition:all 0.2s ease;"><div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:bold; color:#ffe066; min-width:30px;">' + medal + '</span><span style="color:' + rank.color + '; font-size:0.85rem;">' + rank.name + '</span></div><span style="color:#ccc; font-weight:bold;">' + s + '</span></div>';
-    }).join('');
-    if (scores.length === 0) {
-      html += '<div style="text-align:center; color:#666; padding:20px;">Нет записей</div>';
-    }
-    lb.innerHTML = html;
   }
+
+  // Fallback to local leaderboard
+  html += scores.map(function(s, i) {
+    const medal = i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : (i+1)));
+    const rank = getRank(s);
+    return '<div style="padding:12px 0; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1);"><div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:bold; color:#ffe066; min-width:30px;">' + medal + '</span><span style="color:' + rank.color + '; font-size:0.85rem;">' + rank.name + '</span></div><span style="color:#ccc; font-weight:bold;">' + s + '</span></div>';
+  }).join('');
+  
+  if (scores.length === 0) {
+    html += '<div style="text-align:center; color:var(--text-muted); padding:20px;">Нет записей</div>';
+  }
+  
+  lb.innerHTML = html;
   return scores;
 }
 
