@@ -320,10 +320,20 @@ function updateMechanics(state) {
   
   // Booster pickup (CHECK EVERY FRAME - separate from food)
   if (state.booster && head[0] === state.booster.x && head[1] === state.booster.y) {
-    activateBooster(state, state.booster.boosterType);
+    const boosterType = state.booster.boosterType;
+    activateBooster(state, boosterType);
     state.booster = null; // Remove booster after pickup
     state.lastEventBooster = true;
-    console.log('✅ Booster picked up!');
+    console.log('✅ Booster picked up:', boosterType);
+    
+    // Track booster usage for achievements (immediately)
+    const stats = getPlayerStats();
+    if (boosterType && !stats.boostersUsed.includes(boosterType)) {
+      stats.boostersUsed.push(boosterType);
+      savePlayerStats(stats);
+      console.log('🏆 Booster tracked for achievement:', boosterType);
+    }
+    
     // Don't schedule next spawn here - only after despawn/effect end
   }
   
