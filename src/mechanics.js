@@ -500,14 +500,38 @@ function getPlayerStats() {
     skinsOwned: 0,
     totalStars: 0,
   };
-  
+
+  // Try to get from localStorage first
   try {
     const stored = localStorage.getItem('snakeplus_stats');
     if (stored) {
-      return { ...defaultStats, ...JSON.parse(stored) };
+      const localStats = { ...defaultStats, ...JSON.parse(stored) };
+      
+      // Try to get from server (for cross-device sync)
+      // Only if we have Telegram user
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
+        import('./api.js').then(({ getPlayerStatsFromServer }) => {
+          getPlayerStatsFromServer().then(serverStats => {
+            if (serverStats) {
+              // Merge server stats (prefer higher values)
+              const merged = {
+                bestScore: Math.max(localStats.bestScore, serverStats.bestScore || 0),
+                maxCombo: Math.max(localStats.maxCombo, serverStats.maxCombo || 0),
+                totalGames: localStats.totalGames + (serverStats.totalGames || 0),
+                boostersUsed: [...new Set([...localStats.boostersUsed, ...(serverStats.boostersUsed || [])])],
+                skinsOwned: Math.max(localStats.skinsOwned, serverStats.skinsOwned || 0),
+                totalStars: Math.max(localStats.totalStars, serverStats.totalStars || 0),
+              };
+              localStorage.setItem('snakeplus_stats', JSON.stringify(merged));
+            }
+          });
+        });
+      }
+      
+      return localStats;
     }
   } catch (e) {}
-  
+
   return defaultStats;
 }
 

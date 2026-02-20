@@ -82,6 +82,20 @@ async function initDatabase() {
   `);
 
   db.run(`
+    CREATE TABLE IF NOT EXISTS user_stats (
+      user_id TEXT PRIMARY KEY,
+      best_score INTEGER DEFAULT 0,
+      max_combo INTEGER DEFAULT 0,
+      total_games INTEGER DEFAULT 0,
+      boosters_used TEXT DEFAULT '[]',
+      skins_owned INTEGER DEFAULT 0,
+      total_stars INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  db.run(`
     CREATE TABLE IF NOT EXISTS global_stats (
       id INTEGER PRIMARY KEY CHECK (id = 1),
       total_games INTEGER DEFAULT 0,

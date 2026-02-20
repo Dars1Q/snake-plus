@@ -122,6 +122,21 @@ export async function savePlayerStatsToServer(stats) {
   });
 }
 
+// Get player stats from server
+export async function getPlayerStatsFromServer() {
+  const userId = getUserId();
+  
+  try {
+    const result = await apiRequest('/user/' + userId + '/stats');
+    if (result.success && result.stats) {
+      return result.stats;
+    }
+  } catch(e) {
+    console.log('Failed to get stats from server:', e);
+  }
+  return null;
+}
+
 // Get leaderboard
 export async function getLeaderboard(limit = 50) {
   return apiRequest(`/leaderboard?limit=${limit}`);
