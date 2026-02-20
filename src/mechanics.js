@@ -312,11 +312,13 @@ function updateMechanics(state) {
       state.speed += 1;
     }
 
-    // Booster pickup (separate from food)
+    // Booster pickup (separate from food - just gives effect, doesn't replace food)
     if (state.booster && head[0] === state.booster.x && head[1] === state.booster.y) {
       activateBooster(state, state.booster.boosterType);
       state.booster = null; // Remove booster after pickup
       state.lastEventBooster = true;
+      // Schedule next booster spawn 10 seconds after pickup
+      state.nextBoosterSpawnTime = performance.now() + BOOSTER_RESPAWN_TIME;
     }
 
     // Spawn new food (without booster - boosters spawn separately now)
@@ -324,6 +326,7 @@ function updateMechanics(state) {
     
     // Check if we should spawn a booster near food
     const now = performance.now();
+    // Only spawn booster if there isn't one active and enough time has passed
     if (!state.booster && now >= state.nextBoosterSpawnTime) {
       // 15% chance to spawn booster
       if (Math.random() < BOOSTER_SPAWN_CHANCE) {
@@ -331,17 +334,17 @@ function updateMechanics(state) {
         if (boosterFood) {
           state.booster = boosterFood;
           state.boosterSpawnTime = now;
-          state.nextBoosterSpawnTime = now + BOOSTER_RESPAWN_TIME;
+          // Next spawn will be 10 seconds after this booster despawns
+          state.nextBoosterSpawnTime = now + BOOSTER_DESPAWN_TIME + BOOSTER_RESPAWN_TIME;
         }
-      } else {
-        // No booster spawned, reschedule
-        state.nextBoosterSpawnTime = now + BOOSTER_RESPAWN_TIME;
       }
     }
     
     // Check if booster should despawn
     if (state.booster && now >= state.booster.despawnTime) {
       state.booster = null;
+      // Schedule next spawn 10 seconds after despawn
+      state.nextBoosterSpawnTime = now + BOOSTER_RESPAWN_TIME;
     }
     
     state.lastEventFood = true;
@@ -567,9 +570,9 @@ function activateBooster(state, boosterType) {
 
 function updateBoosters(state) {
   if (!state.booster) return;
-  
+
   const now = performance.now();
-  
+
   // Check if booster expired
   if (now >= state.booster.endTime) {
     // Reset booster effects
@@ -579,6 +582,10 @@ function updateBoosters(state) {
     if (state.booster.effect === 'shield') {
       state.shieldActive = false;
     }
+    
+    // Schedule next booster spawn 10 seconds after effect ends
+    state.nextBoosterSpawnTime = now + BOOSTER_RESPAWN_TIME;
+    
     state.booster = null;
     console.log('Booster expired');
   }
