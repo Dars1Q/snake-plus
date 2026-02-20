@@ -292,8 +292,8 @@ function updateMechanics(state) {
     let points = state.food.isBonus ? 10 * state.comboMultiplier : 1 * state.comboMultiplier;
 
     // Apply double points booster
-    if (state.booster && state.booster.effect === 'multiplier') {
-      points *= state.booster.value;
+    if (state.activeBoosterEffect && state.activeBoosterEffect.effect === 'multiplier') {
+      points *= state.activeBoosterEffect.value;
     }
 
     state.score += points;
@@ -304,78 +304,79 @@ function updateMechanics(state) {
       state.stars += STARS_FOR_MILESTONE * (newCheckpoint - state.lastScoreCheckpoint);
       state.lastScoreCheckpoint = newCheckpoint;
     }
-    
-    // Speed up (only if no slow motion booster)
-    if (state.snake.length % SPEED_INCREASE_FOOD === 0 && (!state.booster || state.booster.effect !== 'speed')) {
-      state.speed += 1;
-    }
 
-    // Booster pickup (separate from food - just gives effect, doesn't replace food)
-    if (state.booster && head[0] === state.booster.x && head[1] === state.booster.y) {
-      activateBooster(state, state.booster.boosterType);
-      state.booster = null; // Remove booster after pickup
-      state.lastEventBooster = true;
-      console.log('Booster picked up:', state.booster);
-      // Don't schedule next spawn here - only after despawn/effect end
+    // Speed up (only if no slow motion booster)
+    if (state.snake.length % SPEED_INCREASE_FOOD === 0 && (!state.activeBoosterEffect || state.activeBoosterEffect.effect !== 'speed')) {
+      state.speed += 1;
     }
 
     // Spawn new food (without booster - boosters spawn separately now)
     state.food = spawnFood(state.snake, state.iceTiles, null);
-
-    // Check if we should spawn a booster near food (use existing 'now' from above)
-    // Only spawn booster if there isn't one active and enough time has passed
-    if (!state.booster && now >= state.nextBoosterSpawnTime) {
-      // 15% chance to spawn booster
-      if (Math.random() < BOOSTER_SPAWN_CHANCE) {
-        const boosterFood = spawnBoosterNearFood(state.food, state.snake, state.iceTiles);
-        if (boosterFood) {
-          state.booster = boosterFood;
-          state.boosterSpawnTime = now;
-          // Next spawn will be 10 seconds after this booster despawns
-          state.nextBoosterSpawnTime = now + BOOSTER_DESPAWN_TIME + BOOSTER_RESPAWN_TIME;
-        }
-      }
-    }
-    
-    // Check if booster should despawn
-    if (state.booster && now >= state.booster.despawnTime) {
-      state.booster = null;
-      // Schedule next spawn 10 seconds after despawn
-      state.nextBoosterSpawnTime = now + BOOSTER_RESPAWN_TIME;
-    }
-    
     state.lastEventFood = true;
-  } else {
-    // Magnet booster - pull food towards snake
-    if (state.booster && state.booster.effect === 'magnet') {
-      const magnetRange = state.booster.value;
-      const dx = head[0] - state.food.x;
-      const dy = head[1] - state.food.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      
-      // If food is within magnet range, move it towards snake
-      if (dist > 0 && dist <= magnetRange) {
-        // Move food one cell closer every few frames
-        if (Math.random() > 0.3) {
-          const moveX = dx > 0 ? 1 : (dx < 0 ? -1 : 0);
-          const moveY = dy > 0 ? 1 : (dy < 0 ? -1 : 0);
-          
-          // Only move if new position is valid
-          const newX = state.food.x + moveX;
-          const newY = state.food.y + moveY;
-          
-          if (newX >= 0 && newX < GRID_SIZE && newY >= 0 && newY < GRID_SIZE) {
-            if (!state.snake.some(([sx, sy]) => sx === newX && sy === newY) &&
-                !state.iceTiles.some(tile => tile.x === newX && tile.y === newY)) {
-              state.food.x = newX;
-              state.food.y = newY;
-            }
+  }
+  
+  // Booster pickup (CHECK EVERY FRAME - separate from food)
+  if (state.booster && head[0] === state.booster.x && head[1] === state.booster.y) {
+    activateBooster(state, state.booster.boosterType);
+    state.booster = null; // Remove booster after pickup
+    state.lastEventBooster = true;
+    console.log('✅ Booster picked up!');
+    // Don't schedule next spawn here - only after despawn/effect end
+  }
+  
+  // Magnet booster effect - pull food towards snake
+  if (state.activeBoosterEffect && state.activeBoosterEffect.effect === 'magnet') {
+    const magnetRange = state.activeBoosterEffect.value;
+    const dx = head[0] - state.food.x;
+    const dy = head[1] - state.food.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    // If food is within magnet range, move it towards snake
+    if (dist > 0 && dist <= magnetRange) {
+      // Move food one cell closer every few frames
+      if (Math.random() > 0.3) {
+        const moveX = dx > 0 ? 1 : (dx < 0 ? -1 : 0);
+        const moveY = dy > 0 ? 1 : (dy < 0 ? -1 : 0);
+
+        // Only move if new position is valid
+        const newX = state.food.x + moveX;
+        const newY = state.food.y + moveY;
+
+        if (newX >= 0 && newX < GRID_SIZE && newY >= 0 && newY < GRID_SIZE) {
+          if (!state.snake.some(([sx, sy]) => sx === newX && sy === newY) &&
+              !state.iceTiles.some(tile => tile.x === newX && tile.y === newY)) {
+            state.food.x = newX;
+            state.food.y = newY;
           }
         }
       }
     }
-    
-    state.snake.pop();
+  }
+
+  state.snake.pop();
+  
+  // Spawn booster periodically (every frame check)
+  const now = performance.now();
+  if (!state.booster && !state.activeBoosterEffect && now >= state.nextBoosterSpawnTime) {
+    // 15% chance to spawn booster
+    if (Math.random() < BOOSTER_SPAWN_CHANCE) {
+      const boosterObj = spawnBoosterNearFood(state.food, state.snake, state.iceTiles);
+      if (boosterObj) {
+        state.booster = boosterObj;
+        state.boosterSpawnTime = now;
+        // Next spawn will be 10 seconds after this booster despawns
+        state.nextBoosterSpawnTime = now + BOOSTER_DESPAWN_TIME + BOOSTER_RESPAWN_TIME;
+        console.log('⭐ Booster spawned at', boosterObj.x, boosterObj.y);
+      }
+    }
+  }
+  
+  // Check if booster should despawn (not picked up in time)
+  if (state.booster && now >= state.booster.despawnTime) {
+    state.booster = null;
+    // Schedule next spawn 10 seconds after despawn
+    state.nextBoosterSpawnTime = now + BOOSTER_RESPAWN_TIME;
+    console.log('⏰ Booster despawned (not picked up)');
   }
   
   // Ice tile sliding + mark ice for despawn when stepped on
