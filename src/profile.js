@@ -1,6 +1,6 @@
 // profile.js - Player Profile UI
 import { getRank, getPlayerStats } from './mechanics.js';
-import { getUserData } from './api.js';
+import { getUserData, getUserId } from './api.js';
 import { ONLINE_MODE } from './config.js';
 
 const translations = {
@@ -72,11 +72,30 @@ async function loadProfileData(lang) {
     const localSkins = JSON.parse(localStorage.getItem('snakeplus_skins') || '["#2ecc40"]');
     const localScores = JSON.parse(localStorage.getItem('snakeplus_scores') || '[]');
 
+    // Get personal best from Firebase
+    let personalTop5 = localScores;
+    if (window.db) {
+      const userId = getUserId();
+      const querySnapshot = await window.db.collection('scores')
+        .where('userId', '==', userId)
+        .orderBy('score', 'desc')
+        .limit(5)
+        .get();
+      
+      if (!querySnapshot.empty) {
+        personalTop5 = [];
+        querySnapshot.forEach(doc => {
+          const data = doc.data();
+          personalTop5.push(data.score);
+        });
+      }
+    }
+
     const userData = {
-      bestScore: stats.bestScore || (localScores.length > 0 ? localScores[0] : 0),
+      bestScore: personalTop5.length > 0 ? personalTop5[0] : (stats.bestScore || 0),
       stars: parseInt(localStars),
       totalStars: stats.totalStars || parseInt(localStars),
-      rank: getRank(stats.bestScore || 0).name,
+      rank: getRank(personalTop5.length > 0 ? personalTop5[0] : 0).name,
     };
 
     const rank = getRank(userData.bestScore || 0);
@@ -114,11 +133,11 @@ async function loadProfileData(lang) {
       <!-- Top 5 Personal Games -->
       <div style="background:#141618; border:1px solid #2ecc40; border-radius:12px; padding:16px;">
         <h3 style="margin:0 0 12px 0; color:#2ecc40; font-size:1.1rem;">🎯 Top 5 Personal</h3>
-        ${localScores.length > 0
-          ? localScores.slice(0, 5).map((s, i) => {
+        ${personalTop5.length > 0
+          ? personalTop5.slice(0, 5).map((s, i) => {
               const gameRank = getRank(s);
               return `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:${i < Math.min(localScores.length, 5) - 1 ? '1px solid #2a2d31' : 'none'};">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:${i < Math.min(personalTop5.length, 5) - 1 ? '1px solid #2a2d31' : 'none'};">
                   <div style="display:flex; align-items:center; gap:10px;">
                     <span style="color:#ffe066; font-weight:bold; font-size:1rem; width:25px;">${i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : '#' + (i+1)))}</span>
                     <span style="color:${gameRank.color}; font-size:0.8rem;">${gameRank.name}</span>
