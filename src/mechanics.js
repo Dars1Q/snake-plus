@@ -276,8 +276,11 @@ function updateMechanics(state) {
   }
   state.snake.unshift(head);
   
+  let ateFood = false;
+  
   // Food pickup
   if (head[0] === state.food.x && head[1] === state.food.y) {
+    ateFood = true;
     const now = performance.now();
 
     // Combo - check BEFORE updating lastFoodTime
@@ -353,7 +356,10 @@ function updateMechanics(state) {
     }
   }
 
-  state.snake.pop();
+  // Remove tail (only if didn't eat food)
+  if (!ateFood) {
+    state.snake.pop();
+  }
   
   // Spawn booster periodically (every frame check)
   const now = performance.now();
