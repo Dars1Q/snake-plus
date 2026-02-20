@@ -4,26 +4,18 @@ const express = require('express');
 const cors = require('cors');
 const crypto = require('crypto');
 const path = require('path');
-const { initDatabase, getPool, updateGlobalStats } = require('./database');
+const { getDb, initDatabase, updateGlobalStats } = require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware - CORS должен быть первым!
-app.use(cors({
-  origin: ['https://dars1q.github.io', 'http://localhost:8080', 'http://127.0.0.1:8080'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// Middleware
+app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../')));
 
 // Initialize database
-initDatabase().catch(err => {
-  console.error('Failed to initialize database:', err);
-  process.exit(1);
-});
+initDatabase();
 
 // ============================================
 // API Endpoints
@@ -35,7 +27,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Save score
-app.post('/api/score', async (req, res) => {
+app.post('/api/score', (req, res) => {
   try {
     const { userId, username, score, rank, language, telegramUser } = req.body;
 
@@ -43,33 +35,11 @@ app.post('/api/score', async (req, res) => {
       return res.status(400).json({ error: 'userId and score are required' });
     }
 
-    const pool = getPool();
-    
-    // Convert telegramUser object to JSON string for PostgreSQL
-    const telegramUserJson = telegramUser ? JSON.stringify(telegramUser) : null;
-    
-    // Insert or update user
-    await pool.query(`
-      INSERT INTO users (user_id, username, telegram_user, first_name, last_name, language_code, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
-      ON CONFLICT (user_id) DO UPDATE SET
-        username = EXCLUDED.username,
-        telegram_user = EXCLUDED.telegram_user,
-        updated_at = CURRENT_TIMESTAMP
-    `, [
-      userId,
-      username || 'Anonymous',
-      telegramUserJson,
-      telegramUser?.first_name || null,
-      telegramUser?.last_name || null,
-      telegramUser?.language_code || language || 'en'
-    ]);
-
-    // Insert score
-    await pool.query(`
+    const db = getDb();
+    db.run(`
       INSERT INTO scores (user_id, username, telegram_user, score, rank, language, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
-    `, [userId, username || 'Anonymous', telegramUserJson, score, rank || 'Bronze I', language || 'en']);
+      VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+    `, [userId, username || 'Anonymous', telegramUser || null, score, rank || 'Bronze I', language || 'en']);
 
     // Update global stats
     updateGlobalStats(score, userId);
@@ -80,37 +50,38 @@ app.post('/api/score', async (req, res) => {
     });
   } catch (error) {
     console.error('Save score error:', error);
-    res.status(500).json({ error: 'Failed to save score: ' + error.message });
+    res.status(500).json({ error: 'Failed to save score' });
   }
 });
 
-// Get leaderboard (global top scores - unique users with best scores)
-app.get('/api/leaderboard', async (req, res) => {
+// Get leaderboard (global top scores)
+app.get('/api/leaderboard', (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 50;
-    const pool = getPool();
+    const db = getDb();
 
-    // Get unique users with their best scores
-    const result = await pool.query(`
-      SELECT s1.user_id, s1.username, s1.telegram_user, s1.score, s1.rank, s1.language, s1.created_at
-      FROM scores s1
-      INNER JOIN (
-        SELECT user_id, MAX(score) as max_score
-        FROM scores
-        GROUP BY user_id
-      ) s2 ON s1.user_id = s2.user_id AND s1.score = s2.max_score
-      ORDER BY s1.score DESC
-      LIMIT $1
-    `, [limit]);
+    const stmt = db.prepare(`
+      SELECT user_id, username, telegram_user, score, rank, language, created_at
+      FROM scores
+      ORDER BY score DESC
+      LIMIT ?
+    `);
 
-    res.json({
-      success: true,
-      leaderboard: result.rows,
-      total: result.rows.length
+    stmt.bind([limit]);
+    const scores = [];
+    while (stmt.step()) {
+      scores.push(stmt.getAsObject());
+    }
+    stmt.free();
+    
+    res.json({ 
+      success: true, 
+      leaderboard: scores,
+      total: scores.length
     });
   } catch (error) {
     console.error('Get leaderboard error:', error);
-    res.status(500).json({ error: 'Failed to get leaderboard: ' + error.message });
+    res.status(500).json({ error: 'Failed to get leaderboard' });
   }
 });
 
@@ -248,22 +219,22 @@ app.post('/api/user/:userId/stars', (req, res) => {
   try {
     const { userId } = req.params;
     const { stars, totalStars } = req.body;
-    
+
     if (!userId || stars === undefined) {
       return res.status(400).json({ error: 'userId and stars are required' });
     }
-    
+
     const db = getDb();
-    
+
     // Check if exists
     const checkStmt = db.prepare(`SELECT * FROM user_stars WHERE user_id = ?`);
     checkStmt.bind([userId]);
     let exists = checkStmt.step();
     checkStmt.free();
-    
+
     if (exists) {
       db.run(`
-        UPDATE user_stars 
+        UPDATE user_stars
         SET stars = ?, total_stars = ?, updated_at = datetime('now')
         WHERE user_id = ?
       `, [stars, totalStars || stars, userId]);
@@ -273,11 +244,107 @@ app.post('/api/user/:userId/stars', (req, res) => {
         VALUES (?, ?, ?, datetime('now'))
       `, [userId, stars, totalStars || stars, userId]);
     }
-    
+
     res.json({ success: true, message: 'Stars updated successfully' });
   } catch (error) {
     console.error('Update stars error:', error);
     res.status(500).json({ error: 'Failed to update stars' });
+  }
+});
+
+// Save player stats (for cross-device sync)
+app.post('/api/user/:userId/stats', (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { stats } = req.body;
+
+    if (!userId || !stats) {
+      return res.status(400).json({ error: 'userId and stats are required' });
+    }
+
+    const db = getDb();
+
+    // Check if stats exist
+    const checkStmt = db.prepare(`SELECT * FROM user_stats WHERE user_id = ?`);
+    checkStmt.bind([userId]);
+    let exists = checkStmt.step();
+    checkStmt.free();
+
+    if (exists) {
+      // Update existing stats
+      db.run(`
+        UPDATE user_stats
+        SET best_score = ?, max_combo = ?, total_games = ?, 
+            boosters_used = ?, skins_owned = ?, total_stars = ?,
+            updated_at = datetime('now')
+        WHERE user_id = ?
+      `, [
+        stats.bestScore || 0,
+        stats.maxCombo || 0,
+        stats.totalGames || 0,
+        JSON.stringify(stats.boostersUsed || []),
+        stats.skinsOwned || 0,
+        stats.totalStars || 0,
+        userId
+      ]);
+    } else {
+      // Insert new stats
+      db.run(`
+        INSERT INTO user_stats (user_id, best_score, max_combo, total_games, boosters_used, skins_owned, total_stars, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+      `, [
+        userId,
+        stats.bestScore || 0,
+        stats.maxCombo || 0,
+        stats.totalGames || 0,
+        JSON.stringify(stats.boostersUsed || []),
+        stats.skinsOwned || 0,
+        stats.totalStars || 0
+      ]);
+    }
+
+    res.json({ success: true, message: 'Stats saved successfully' });
+  } catch (error) {
+    console.error('Save stats error:', error);
+    res.status(500).json({ error: 'Failed to save stats' });
+  }
+});
+
+// Get player stats
+app.get('/api/user/:userId/stats', (req, res) => {
+  try {
+    const { userId } = req.params;
+    const db = getDb();
+
+    const stmt = db.prepare(`
+      SELECT best_score, max_combo, total_games, boosters_used, skins_owned, total_stars
+      FROM user_stats
+      WHERE user_id = ?
+    `);
+    stmt.bind([userId]);
+
+    let result = null;
+    if (stmt.step()) {
+      const row = stmt.getAsObject();
+      result = {
+        bestScore: row.best_score,
+        maxCombo: row.max_combo,
+        totalGames: row.total_games,
+        boostersUsed: JSON.parse(row.boosters_used || '[]'),
+        skinsOwned: row.skins_owned,
+        totalStars: row.total_stars
+      };
+    }
+    stmt.free();
+
+    if (!result) {
+      return res.json({ success: true, stats: null });
+    }
+
+    res.json({ success: true, stats: result });
+  } catch (error) {
+    console.error('Get stats error:', error);
+    res.status(500).json({ error: 'Failed to get stats' });
   }
 });
 
