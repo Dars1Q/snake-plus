@@ -220,29 +220,6 @@ function updateMechanics(state) {
   state.lastEventFood = false;
   state.lastEventIceBreak = false;
 
-  // Check if on ice tile (apply 2x speed for 2 seconds)
-  const currentHead = state.snake[0];
-  const onIce = state.iceTiles.some(tile => tile.x === currentHead[0] && tile.y === currentHead[1]);
-  
-  if (onIce && !state.onIce) {
-    // Just stepped on ice - apply speed boost
-    state.onIce = true;
-    state.iceSpeedBoost = true;
-    state.baseSpeedBeforeIce = state.baseSpeed;
-    state.speed = state.speed * ICE_SPEED_MULTIPLIER;
-    state.iceBoostEndTime = performance.now() + ICE_DURATION;
-    state.lastEventIceBreak = true;
-  }
-  
-  // Check if ice boost expired
-  if (state.iceSpeedBoost && performance.now() > state.iceBoostEndTime) {
-    state.iceSpeedBoost = false;
-    state.onIce = false;
-    state.speed = state.baseSpeedBeforeIce || state.speed;
-  }
-  
-  state.onIce = onIce;
-
   // Direction update
   if (isOpposite(state.direction, state.nextDirection)) {
     // Ignore reverse
@@ -278,10 +255,26 @@ function updateMechanics(state) {
   
   let ateFood = false;
   
+  // Check ice tile effect (apply speed boost for 2 seconds)
+  const onIce = state.iceTiles.some(tile => tile.x === head[0] && tile.y === head[1]);
+  const now = performance.now();
+  
+  if (onIce) {
+    // Add 2 seconds to ice boost timer (stack by time, not multiplier)
+    state.iceBoostEndTime = Math.max(state.iceBoostEndTime, now) + ICE_DURATION;
+    state.onIce = true;
+  }
+  
+  // Apply ice speed boost if active
+  if (now < state.iceBoostEndTime) {
+    state.speed = state.baseSpeed * ICE_SPEED_MULTIPLIER;
+  } else {
+    state.onIce = false;
+  }
+  
   // Food pickup
   if (head[0] === state.food.x && head[1] === state.food.y) {
     ateFood = true;
-    const now = performance.now();
 
     // Combo - check BEFORE updating lastFoodTime
     if (now - state.lastFoodTime < COMBO_WINDOW) {
@@ -371,8 +364,7 @@ function updateMechanics(state) {
     state.snake.pop();
   }
   
-  // Spawn booster periodically (every frame check)
-  const now = performance.now();
+  // Spawn booster periodically (every frame check - use existing 'now')
   if (!state.booster && !state.activeBoosterEffect && now >= state.nextBoosterSpawnTime) {
     // 15% chance to spawn booster
     if (Math.random() < BOOSTER_SPAWN_CHANCE) {
