@@ -11,6 +11,11 @@ const ICE_RESPAWN_DELAY = 4000;
 const ICE_SPEED_MULTIPLIER = 2.0; // 2x speed on ice
 const ICE_DURATION = 2000; // 2 seconds ice effect
 
+// Booster spawn settings
+const BOOSTER_SPAWN_CHANCE = 0.15; // 15% chance to spawn booster with food
+const BOOSTER_DESPAWN_TIME = 8000; // Booster disappears after 8 seconds if not collected
+const BOOSTER_RESPAWN_TIME = 10000; // New booster spawns every 10 seconds
+
 // Booster types and configuration
 const BOOSTERS = {
   SLOW_MOTION: { 
@@ -183,6 +188,8 @@ function getInitialState() {
     nextDirection: 'right',
     food: spawnFood([], []),
     booster: null, // Current active booster
+    boosterSpawnTime: 0, // When current booster was spawned
+    nextBoosterSpawnTime: performance.now() + BOOSTER_RESPAWN_TIME, // When next booster will spawn
     score: 0,
     comboMultiplier: 1,
     comboTimer: 0,
@@ -270,7 +277,8 @@ function updateMechanics(state) {
     }
   }
   state.snake.unshift(head);
-  // Food
+  
+  // Food pickup
   if (head[0] === state.food.x && head[1] === state.food.y) {
     const now = performance.now();
 
@@ -282,35 +290,60 @@ function updateMechanics(state) {
     }
     state.lastFoodTime = now;
 
-    // Check for booster pickup
-    if (state.food.boosterType) {
-      activateBooster(state, state.food.boosterType);
-      state.lastEventBooster = true;
-    } else {
-      // Regular points calculation
-      let points = state.food.isBonus ? 10 * state.comboMultiplier : 1 * state.comboMultiplier;
-      
-      // Apply double points booster
-      if (state.booster && state.booster.effect === 'multiplier') {
-        points *= state.booster.value;
-      }
-      
-      state.score += points;
-      state.stars += Math.floor(points * STARS_PER_POINT);
-      
-      const newCheckpoint = Math.floor(state.score / 100);
-      if (newCheckpoint > state.lastScoreCheckpoint) {
-        state.stars += STARS_FOR_MILESTONE * (newCheckpoint - state.lastScoreCheckpoint);
-        state.lastScoreCheckpoint = newCheckpoint;
-      }
+    // Regular points calculation (no booster in food anymore)
+    let points = state.food.isBonus ? 10 * state.comboMultiplier : 1 * state.comboMultiplier;
+
+    // Apply double points booster
+    if (state.booster && state.booster.effect === 'multiplier') {
+      points *= state.booster.value;
+    }
+
+    state.score += points;
+    state.stars += Math.floor(points * STARS_PER_POINT);
+
+    const newCheckpoint = Math.floor(state.score / 100);
+    if (newCheckpoint > state.lastScoreCheckpoint) {
+      state.stars += STARS_FOR_MILESTONE * (newCheckpoint - state.lastScoreCheckpoint);
+      state.lastScoreCheckpoint = newCheckpoint;
     }
     
     // Speed up (only if no slow motion booster)
     if (state.snake.length % SPEED_INCREASE_FOOD === 0 && (!state.booster || state.booster.effect !== 'speed')) {
       state.speed += 1;
     }
+
+    // Booster pickup (separate from food)
+    if (state.booster && head[0] === state.booster.x && head[1] === state.booster.y) {
+      activateBooster(state, state.booster.boosterType);
+      state.booster = null; // Remove booster after pickup
+      state.lastEventBooster = true;
+    }
+
+    // Spawn new food (without booster - boosters spawn separately now)
+    state.food = spawnFood(state.snake, state.iceTiles, null);
     
-    state.food = spawnFood(state.snake, state.iceTiles);
+    // Check if we should spawn a booster near food
+    const now = performance.now();
+    if (!state.booster && now >= state.nextBoosterSpawnTime) {
+      // 15% chance to spawn booster
+      if (Math.random() < BOOSTER_SPAWN_CHANCE) {
+        const boosterFood = spawnBoosterNearFood(state.food, state.snake, state.iceTiles);
+        if (boosterFood) {
+          state.booster = boosterFood;
+          state.boosterSpawnTime = now;
+          state.nextBoosterSpawnTime = now + BOOSTER_RESPAWN_TIME;
+        }
+      } else {
+        // No booster spawned, reschedule
+        state.nextBoosterSpawnTime = now + BOOSTER_RESPAWN_TIME;
+      }
+    }
+    
+    // Check if booster should despawn
+    if (state.booster && now >= state.booster.despawnTime) {
+      state.booster = null;
+    }
+    
     state.lastEventFood = true;
   } else {
     // Magnet booster - pull food towards snake
@@ -394,33 +427,65 @@ function isOpposite(dir1, dir2) {
   );
 }
 
-function spawnFood(snake, iceTiles) {
+function spawnFood(snake, iceTiles, boosterType = null) {
   let x, y;
   const rand = Math.random();
   let isBonus = rand < BONUS_FOOD_CHANCE;
-  let boosterType = null;
-  
-  // Check for booster spawn (8% chance, overrides bonus food)
-  if (rand > (1 - BOOSTER_SPAWN_CHANCE)) {
-    isBonus = false;
-    // Random booster type
-    const boosterKeys = Object.keys(BOOSTERS);
-    const randomKey = boosterKeys[Math.floor(Math.random() * boosterKeys.length)];
-    boosterType = BOOSTERS[randomKey].id;
-  }
-  
+
   do {
     x = Math.floor(Math.random() * GRID_SIZE);
     y = Math.floor(Math.random() * GRID_SIZE);
   } while (snake.some(([sx, sy]) => sx === x && sy === y) || iceTiles.some(tile => tile.x === x && tile.y === y));
-  
-  return { 
-    x, 
-    y, 
-    isBonus, 
-    boosterType,
-    spawnTime: performance.now() 
+
+  return {
+    x,
+    y,
+    isBonus,
+    boosterType, // null if no booster spawned with this food
+    spawnTime: performance.now()
   };
+}
+
+// Spawn booster next to food (not replacing food)
+function spawnBoosterNearFood(food, snake, iceTiles) {
+  if (!food) return null;
+  
+  // Try to find a valid position near food
+  const directions = [
+    [0, -1], [0, 1], [-1, 0], [1, 0],  // Adjacent cells
+    [-1, -1], [-1, 1], [1, -1], [1, 1] // Diagonal cells
+  ];
+  
+  const shuffled = directions.sort(() => Math.random() - 0.5);
+  
+  for (const [dx, dy] of shuffled) {
+    const x = food.x + dx;
+    const y = food.y + dy;
+    
+    // Check if valid position
+    if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+      const collisionWithSnake = snake.some(([sx, sy]) => sx === x && sy === y);
+      const collisionWithFood = (food.x === x && food.y === y);
+      const collisionWithIce = iceTiles.some(tile => tile.x === x && tile.y === y);
+      
+      if (!collisionWithSnake && !collisionWithFood && !collisionWithIce) {
+        // Random booster type
+        const boosterKeys = Object.keys(BOOSTERS);
+        const randomKey = boosterKeys[Math.floor(Math.random() * boosterKeys.length)];
+        const boosterId = BOOSTERS[randomKey].id;
+        
+        return {
+          x,
+          y,
+          boosterType: boosterId,
+          spawnTime: performance.now(),
+          despawnTime: performance.now() + BOOSTER_DESPAWN_TIME
+        };
+      }
+    }
+  }
+  
+  return null; // No valid position found
 }
 
 function spawnIceTiles() {

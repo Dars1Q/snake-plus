@@ -379,11 +379,11 @@ export function renderGame(state) {
       ctx.globalAlpha = 0.85 + 0.15 * a;
       ctx.translate(fx + cellSize / 2, fy + cellSize / 2);
       ctx.scale(scale, scale);
-      
+
       // Glow effect
       ctx.shadowBlur = 10;
-      
-      // Check if booster
+
+      // Check if booster (separate from food now)
       if (state.food.boosterType) {
         const booster = Object.values(BOOSTERS).find(b => b.id === state.food.boosterType);
         if (booster) {
@@ -405,12 +405,52 @@ export function renderGame(state) {
       } else {
         ctx.shadowColor = state.food.isBonus ? '#ffd700' : '#e74c3c';
         ctx.fillStyle = state.food.isBonus ? '#ffd700' : '#e74c3c';
-        
+
         // Draw smaller food (80% of cell size)
         const foodSize = cellSize * 0.8;
         ctx.fillRect(-foodSize / 2, -foodSize / 2, foodSize, foodSize);
       }
       ctx.restore();
+    }
+
+    // Render booster (separate object with timer)
+    if (state.booster) {
+      const booster = Object.values(BOOSTERS).find(b => b.id === state.booster.boosterType);
+      if (booster) {
+        const x = state.booster.x * cellSize + cellSize / 2;
+        const y = state.booster.y * cellSize + cellSize / 2;
+        
+        // Pulsing animation
+        const timeSinceSpawn = now - state.booster.spawnTime;
+        const timeLeft = state.booster.despawnTime - now;
+        const pulse = 0.7 + 0.3 * Math.sin(timeSinceSpawn / 200);
+        
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(pulse, pulse);
+        
+        // Glow effect with timer color (red when about to expire)
+        const timeLeftPercent = timeLeft / BOOSTER_DESPAWN_TIME;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = timeLeftPercent < 0.3 ? '#ff0000' : booster.color;
+        ctx.fillStyle = booster.color;
+        
+        // Draw booster as circle with icon
+        const boosterSize = cellSize * 0.9;
+        ctx.beginPath();
+        ctx.arc(0, 0, boosterSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw icon
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `${cellSize * 0.5}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowBlur = 0;
+        ctx.fillText(booster.icon, 0, 2);
+        
+        ctx.restore();
+      }
     }
     
     // Render food particles
