@@ -56,8 +56,6 @@ const BOOSTERS = {
   },
 };
 
-const BOOSTER_SPAWN_CHANCE = 0.08; // 8% chance to spawn booster instead of bonus food
-
 // Achievements system
 const ACHIEVEMENTS = [
   // Score achievements
@@ -317,15 +315,13 @@ function updateMechanics(state) {
       activateBooster(state, state.booster.boosterType);
       state.booster = null; // Remove booster after pickup
       state.lastEventBooster = true;
-      // Schedule next booster spawn 10 seconds after pickup
-      state.nextBoosterSpawnTime = performance.now() + BOOSTER_RESPAWN_TIME;
+      // Don't schedule next spawn here - only after despawn/effect end
     }
 
     // Spawn new food (without booster - boosters spawn separately now)
     state.food = spawnFood(state.snake, state.iceTiles, null);
-    
-    // Check if we should spawn a booster near food
-    const now = performance.now();
+
+    // Check if we should spawn a booster near food (use existing 'now' from above)
     // Only spawn booster if there isn't one active and enough time has passed
     if (!state.booster && now >= state.nextBoosterSpawnTime) {
       // 15% chance to spawn booster
