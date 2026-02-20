@@ -254,6 +254,7 @@ function updateMechanics(state) {
   state.snake.unshift(head);
   
   let ateFood = false;
+  const now = performance.now();  // Declare once at the top
   
   // Food pickup
   if (head[0] === state.food.x && head[1] === state.food.y) {
@@ -297,7 +298,6 @@ function updateMechanics(state) {
   
   // Check ice tile effect (apply speed boost for 2 seconds) - CHECK EVERY FRAME
   const onIce = state.iceTiles.some(tile => tile.x === head[0] && tile.y === head[1]);
-  const now = performance.now();
   
   if (onIce) {
     // Add 2 seconds to ice boost timer (stack by time, not multiplier)
