@@ -255,27 +255,6 @@ function updateMechanics(state) {
   
   let ateFood = false;
   
-  // Check ice tile effect (apply speed boost for 2 seconds)
-  const onIce = state.iceTiles.some(tile => tile.x === head[0] && tile.y === head[1]);
-  const now = performance.now();
-  
-  if (onIce) {
-    // Add 2 seconds to ice boost timer (stack by time, not multiplier)
-    state.iceBoostEndTime = Math.max(state.iceBoostEndTime, now) + ICE_DURATION;
-    state.onIce = true;
-  }
-  
-  // Apply ice speed boost if timer is still active
-  // Reset speed to base first
-  state.speed = state.baseSpeed;
-  
-  // Then apply ice boost if active
-  if (now < state.iceBoostEndTime) {
-    state.speed = state.baseSpeed * ICE_SPEED_MULTIPLIER;
-  } else {
-    state.onIce = false;
-  }
-  
   // Food pickup
   if (head[0] === state.food.x && head[1] === state.food.y) {
     ateFood = true;
@@ -307,12 +286,32 @@ function updateMechanics(state) {
 
     // Speed up (only if no slow motion booster)
     if (state.snake.length % SPEED_INCREASE_FOOD === 0 && (!state.activeBoosterEffect || state.activeBoosterEffect.effect !== 'speed')) {
-      state.speed += 1;
+      state.baseSpeed += 1;  // Increase base speed
+      state.speed = state.baseSpeed;  // Apply immediately
     }
 
     // Spawn new food (without booster - boosters spawn separately now)
     state.food = spawnFood(state.snake, state.iceTiles, null);
     state.lastEventFood = true;
+  }
+  
+  // Check ice tile effect (apply speed boost for 2 seconds) - CHECK EVERY FRAME
+  const onIce = state.iceTiles.some(tile => tile.x === head[0] && tile.y === head[1]);
+  const now = performance.now();
+  
+  if (onIce) {
+    // Add 2 seconds to ice boost timer (stack by time, not multiplier)
+    state.iceBoostEndTime = Math.max(state.iceBoostEndTime, now) + ICE_DURATION;
+    state.onIce = true;
+  }
+  
+  // Apply ice speed boost if timer is still active
+  if (now < state.iceBoostEndTime) {
+    state.speed = state.baseSpeed * ICE_SPEED_MULTIPLIER;
+  } else {
+    state.onIce = false;
+    // Restore speed to base speed when ice effect expires
+    state.speed = state.baseSpeed;
   }
   
   // Booster pickup (CHECK EVERY FRAME - separate from food)
