@@ -111,19 +111,19 @@ async function loadProfileData(lang) {
         </div>
       </div>
 
-      <!-- Recent Games -->
+      <!-- Top 5 Personal Games -->
       <div style="background:#141618; border:1px solid #2ecc40; border-radius:12px; padding:16px;">
-        <h3 style="margin:0 0 12px 0; color:#2ecc40; font-size:1.1rem;">🎯 ${lang.recentGames}</h3>
+        <h3 style="margin:0 0 12px 0; color:#2ecc40; font-size:1.1rem;">🎯 Top 5 Personal</h3>
         ${localScores.length > 0
           ? localScores.slice(0, 5).map((s, i) => {
               const gameRank = getRank(s);
               return `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:${i < Math.min(localScores.length, 5) - 1 ? '1px solid #2a2d31' : 'none'};">
                   <div style="display:flex; align-items:center; gap:10px;">
-                    <span style="color:#666; font-size:0.9rem; width:20px;">#${i + 1}</span>
+                    <span style="color:#ffe066; font-weight:bold; font-size:1rem; width:25px;">${i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : '#' + (i+1)))}</span>
                     <span style="color:${gameRank.color}; font-size:0.8rem;">${gameRank.name}</span>
                   </div>
-                  <span style="color:#fff; font-weight:bold;">${s}</span>
+                  <span style="color:#2ecc40; font-weight:bold; font-size:1.1rem;">${s}</span>
                 </div>
               `;
             }).join('')

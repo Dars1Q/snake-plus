@@ -321,7 +321,7 @@ function setupStartScreenButtons(startCallback) {
       document.getElementById('shop-panel').style.display = 'none';
       document.getElementById('settings-panel').style.display = 'none';
       document.getElementById('leaderboard').style.display = 'block';
-      updateLeaderboard();
+      updateLeaderboard(undefined, true); // showGlobal = true
     });
   }
   
@@ -608,7 +608,7 @@ function showToast(message, duration = 3000) {
   }, duration);
 }
 
-async function updateLeaderboard(newScore) {
+async function updateLeaderboard(newScore, showGlobal = false) {
   // Save score locally first
   let scores = JSON.parse(localStorage.getItem('snakeplus_scores') || '[]');
   if (typeof newScore !== 'undefined' && newScore !== null && typeof newScore === 'number') {
@@ -622,15 +622,44 @@ async function updateLeaderboard(newScore) {
 
   const lang = translations[currentLanguage];
   
-  // Show user's personal best score
+  // If showGlobal is true, fetch from server
+  if (showGlobal && ONLINE_MODE) {
+    try {
+      const serverAvailable = await isServerAvailable();
+      if (serverAvailable) {
+        const result = await getLeaderboard(50);
+        if (result.success && result.leaderboard && result.leaderboard.length > 0) {
+          let html = '<h4 style="margin:0 0 12px 0; text-align:center; color: var(--accent-color);">🏆 Global Leaderboard</h4>';
+          html += result.leaderboard.map(function(entry, i) {
+            const medal = i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : '#' + (i+1)));
+            const rank = getRank(entry.score);
+            let displayName = entry.username || 'Anonymous';
+            if (entry.telegram_user) {
+              try {
+                const tgUser = JSON.parse(entry.telegram_user);
+                displayName = tgUser.username || tgUser.first_name || displayName;
+              } catch(e) {}
+            }
+            return '<div style="padding:12px; background:var(--bg-tertiary); border-radius:8px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;"><div style="display:flex; align-items:center; gap:12px;"><span style="font-size:1.2rem; min-width:30px;">' + medal + '</span><div><div style="color:#fff; font-weight:bold;">' + displayName + '</div><div style="color:' + rank.color + '; font-size:0.75rem;">' + rank.name + '</div></div></div><span style="color:var(--accent-color); font-weight:bold; font-size:1.1rem;">' + entry.score + '</span></div>';
+          }).join('');
+          lb.innerHTML = html;
+          return scores;
+        }
+      }
+    } catch (err) {
+      console.log('Global leaderboard not available, using local');
+    }
+  }
+  
+  // Local personal best
   const bestScore = scores.length > 0 ? scores[0] : 0;
   const rank = getRank(bestScore);
   
-  let html = '<h4 style="margin:0 0 12px 0; text-align:center; color: var(--accent-color);">🏆 ' + (lang.rating || 'Rating') + '</h4>';
+  let html = '<h4 style="margin:0 0 12px 0; text-align:center; color: var(--accent-color);">🏆 Personal Best</h4>';
   
   html += '<div style="padding:16px; background:var(--bg-card); border-radius:8px; border:1px solid var(--accent-color); text-align:center;">';
   html += '<div style="font-size:2rem; color:var(--accent-color); font-weight:bold;">' + bestScore + '</div>';
-  html += '<div style="color:var(--text-secondary); margin-top:8px;">Personal Best</div>';
+  html += '<div style="color:var(--text-secondary); margin-top:8px;">Best Score</div>';
   html += '<div style="color:' + rank.color + '; margin-top:4px; font-size:0.9rem;">' + rank.name + '</div>';
   html += '</div>';
   
