@@ -514,7 +514,6 @@ async function showGameOver(score, restartCallback, newAchievements = []) {
     <div style="width:100%; max-width:380px; background:linear-gradient(135deg, #0f1419 0%, #141618 100%); border:1px solid #e74c3c; border-radius:10px; padding:20px; margin:16px 0; text-align:center; box-shadow:0 4px 20px rgba(231, 76, 60, 0.3); animation: slideIn 0.4s ease-out; color: #fff;">
       <div style="margin:10px 0; font-size:1.1rem; color: #fff;">${lang.score}: <b style="color:#2ecc40; font-size:1.4rem; text-shadow:0 0 10px rgba(46,204,64,0.5);">${score}</b></div>
       <div style="margin:10px 0; font-size:1rem; color: #fff;">🏅 ${rank.name}</div>
-      <div style="margin:10px 0; font-size:1rem; color: #fff;">${lang.place}: <b style="color:#ffe066; text-shadow:0 0 10px rgba(255,224,102,0.5);">#1</b></div>
     </div>
 
     ${newAchievements.length > 0 ? `
@@ -542,22 +541,13 @@ async function showGameOver(score, restartCallback, newAchievements = []) {
       <button id="menu-btn" style="width:100%;">🏠 ${lang.menu}</button>
       <button id="share-btn" style="width:100%; background:linear-gradient(90deg, #0088cc 0%, #0066aa 100%);">📤 ${lang.share || 'Share'}</button>
     </div>
-    <div id="leaderboard" style="margin-top:16px; width:100%; max-width:380px; animation: slideIn 0.7s ease-out;"></div>
   `;
-
-  // NOW: Update leaderboard (element exists now)
-  const scores = await updateLeaderboard(score);
-  const place = Array.isArray(scores) && scores.length > 0 ? (scores.indexOf(score) + 1) : 1;
-  
-  // Update place in UI
-  const placeEl = ui.querySelector('.game-over-stats b:last-child') || ui.querySelectorAll('b')[2];
-  if (placeEl) placeEl.textContent = '#' + (place > 0 ? place : '?');
 
   renderSkins();
   document.getElementById('restart-btn').onclick = restartCallback;
   document.getElementById('menu-btn').onclick = () => showStartScreen(true, restartCallback);
 
-  // Share button - Telegram integration
+  // Share button
   const shareBtn = document.getElementById('share-btn');
   if (shareBtn) {
     shareBtn.onclick = (e) => {
@@ -566,7 +556,6 @@ async function showGameOver(score, restartCallback, newAchievements = []) {
 
       const shareMessage = `🐍 Snake+\n\n🏆 Score: ${score}\n🏅 Rank: ${rank.name}\n\nCan you beat my score? 🎮`;
 
-      // Only use clipboard - prevents app closing on iOS
       copyToClipboard(shareMessage);
     };
   }
@@ -632,45 +621,31 @@ async function updateLeaderboard(newScore) {
   if (!lb) return scores;
 
   const lang = translations[currentLanguage];
-  let html = '<h4 style="margin:0 0 12px 0; text-align:center; color: var(--accent-color);">🏆 ' + lang.leaderboard + '</h4>';
-
-  // Try to get online leaderboard if available
-  if (ONLINE_MODE) {
-    try {
-      const serverAvailable = await isServerAvailable();
-      if (serverAvailable) {
-        const result = await getLeaderboard(10);
-        if (result.success && result.leaderboard && result.leaderboard.length > 0) {
-          html += result.leaderboard.map(function(entry, i) {
-            const medal = i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : (i+1)));
-            const rank = getRank(entry.score);
-            let displayName = entry.username || 'Anonymous';
-            if (entry.telegram_user) {
-              try {
-                const tgUser = JSON.parse(entry.telegram_user);
-                displayName = tgUser.username || tgUser.first_name || displayName;
-              } catch(e) {}
-            }
-            return '<div style="padding:12px 0; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1);"><div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:bold; color:#ffe066; min-width:30px;">' + medal + '</span><div style="text-align:left;"><div style="color:#fff; font-weight:bold; font-size:0.95rem;">' + displayName + '</div><div style="color:' + rank.color + '; font-size:0.75rem;">' + rank.name + '</div></div></div><span style="color:#ccc; font-weight:bold;">' + entry.score + '</span></div>';
-          }).join('');
-          lb.innerHTML = html;
-          return scores;
-        }
-      }
-    } catch (err) {
-      console.log('Online leaderboard not available, using local');
-    }
+  
+  // Show user's personal best score
+  const bestScore = scores.length > 0 ? scores[0] : 0;
+  const rank = getRank(bestScore);
+  
+  let html = '<h4 style="margin:0 0 12px 0; text-align:center; color: var(--accent-color);">🏆 ' + (lang.rating || 'Rating') + '</h4>';
+  
+  html += '<div style="padding:16px; background:var(--bg-card); border-radius:8px; border:1px solid var(--accent-color); text-align:center;">';
+  html += '<div style="font-size:2rem; color:var(--accent-color); font-weight:bold;">' + bestScore + '</div>';
+  html += '<div style="color:var(--text-secondary); margin-top:8px;">Personal Best</div>';
+  html += '<div style="color:' + rank.color + '; margin-top:4px; font-size:0.9rem;">' + rank.name + '</div>';
+  html += '</div>';
+  
+  // Show recent games
+  if (scores.length > 1) {
+    html += '<div style="margin-top:16px;"><h5 style="color:var(--text-muted); margin-bottom:8px;">Recent Games</h5>';
+    html += scores.slice(1, 4).map(function(s, i) {
+      const r = getRank(s);
+      return '<div style="padding:8px 12px; display:flex; justify-content:space-between; align-items:center; background:var(--bg-tertiary); border-radius:6px; margin-bottom:6px;"><span style="color:var(--text-secondary); font-size:0.9rem;">Game ' + (i+2) + '</span><span style="color:#fff; font-weight:bold;">' + s + '</span><span style="color:' + r.color + '; font-size:0.75rem;">' + r.name + '</span></div>';
+    }).join('');
+    html += '</div>';
   }
-
-  // Fallback to local leaderboard
-  html += scores.map(function(s, i) {
-    const medal = i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : (i+1)));
-    const rank = getRank(s);
-    return '<div style="padding:12px 0; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1);"><div style="display:flex; align-items:center; gap:10px;"><span style="font-weight:bold; color:#ffe066; min-width:30px;">' + medal + '</span><span style="color:' + rank.color + '; font-size:0.85rem;">' + rank.name + '</span></div><span style="color:#ccc; font-weight:bold;">' + s + '</span></div>';
-  }).join('');
   
   if (scores.length === 0) {
-    html += '<div style="text-align:center; color:var(--text-muted); padding:20px;">Нет записей</div>';
+    html += '<div style="text-align:center; color:var(--text-muted); padding:20px;">No games played yet</div>';
   }
   
   lb.innerHTML = html;
