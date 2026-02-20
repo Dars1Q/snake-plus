@@ -315,6 +315,7 @@ function updateMechanics(state) {
       activateBooster(state, state.booster.boosterType);
       state.booster = null; // Remove booster after pickup
       state.lastEventBooster = true;
+      console.log('Booster picked up:', state.booster);
       // Don't schedule next spawn here - only after despawn/effect end
     }
 
@@ -445,46 +446,52 @@ function spawnFood(snake, iceTiles, boosterType = null) {
   };
 }
 
-// Spawn booster next to food (not replacing food)
+// Spawn booster near food (not replacing food) - at least 2 cells away
 function spawnBoosterNearFood(food, snake, iceTiles) {
   if (!food) return null;
   
-  // Try to find a valid position near food
-  const directions = [
-    [0, -1], [0, 1], [-1, 0], [1, 0],  // Adjacent cells
-    [-1, -1], [-1, 1], [1, -1], [1, 1] // Diagonal cells
-  ];
+  // Try to find a valid position 2-4 cells away from food
+  const validPositions = [];
   
-  const shuffled = directions.sort(() => Math.random() - 0.5);
-  
-  for (const [dx, dy] of shuffled) {
-    const x = food.x + dx;
-    const y = food.y + dy;
-    
-    // Check if valid position
-    if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
-      const collisionWithSnake = snake.some(([sx, sy]) => sx === x && sy === y);
-      const collisionWithFood = (food.x === x && food.y === y);
-      const collisionWithIce = iceTiles.some(tile => tile.x === x && tile.y === y);
+  for (let dx = -4; dx <= 4; dx++) {
+    for (let dy = -4; dy <= 4; dy++) {
+      // Skip positions too close to food (at least 2 cells away)
+      const dist = Math.abs(dx) + Math.abs(dy);
+      if (dist < 2 || dist > 4) continue;
       
-      if (!collisionWithSnake && !collisionWithFood && !collisionWithIce) {
-        // Random booster type
-        const boosterKeys = Object.keys(BOOSTERS);
-        const randomKey = boosterKeys[Math.floor(Math.random() * boosterKeys.length)];
-        const boosterId = BOOSTERS[randomKey].id;
+      const x = food.x + dx;
+      const y = food.y + dy;
+      
+      // Check if valid position
+      if (x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE) {
+        const collisionWithSnake = snake.some(([sx, sy]) => sx === x && sy === y);
+        const collisionWithFood = (food.x === x && food.y === y);
+        const collisionWithIce = iceTiles.some(tile => tile.x === x && tile.y === y);
         
-        return {
-          x,
-          y,
-          boosterType: boosterId,
-          spawnTime: performance.now(),
-          despawnTime: performance.now() + BOOSTER_DESPAWN_TIME
-        };
+        if (!collisionWithSnake && !collisionWithFood && !collisionWithIce) {
+          validPositions.push({ x, y });
+        }
       }
     }
   }
   
-  return null; // No valid position found
+  if (validPositions.length === 0) return null;
+  
+  // Pick random valid position
+  const pos = validPositions[Math.floor(Math.random() * validPositions.length)];
+  
+  // Random booster type
+  const boosterKeys = Object.keys(BOOSTERS);
+  const randomKey = boosterKeys[Math.floor(Math.random() * boosterKeys.length)];
+  const boosterId = BOOSTERS[randomKey].id;
+  
+  return {
+    x: pos.x,
+    y: pos.y,
+    boosterType: boosterId,
+    spawnTime: performance.now(),
+    despawnTime: performance.now() + BOOSTER_DESPAWN_TIME
+  };
 }
 
 function spawnIceTiles() {
@@ -544,46 +551,46 @@ function activateBooster(state, boosterType) {
   // Find booster config
   const boosterConfig = Object.values(BOOSTERS).find(b => b.id === boosterType);
   if (!boosterConfig) return;
-  
-  // Activate booster
-  state.booster = {
+
+  // Activate booster effect (separate from pickup booster)
+  state.activeBoosterEffect = {
     ...boosterConfig,
     startTime: performance.now(),
     endTime: performance.now() + boosterConfig.duration,
   };
-  
+
   // Apply immediate effects
   if (boosterConfig.effect === 'speed') {
     state.speed = state.baseSpeed * boosterConfig.value;
   }
-  
+
   if (boosterConfig.effect === 'shield') {
     state.shieldActive = true;
   }
-  
+
   console.log('Booster activated:', boosterConfig.name);
 }
 
 function updateBoosters(state) {
-  if (!state.booster) return;
+  if (!state.activeBoosterEffect) return;
 
   const now = performance.now();
 
-  // Check if booster expired
-  if (now >= state.booster.endTime) {
+  // Check if booster effect expired
+  if (now >= state.activeBoosterEffect.endTime) {
     // Reset booster effects
-    if (state.booster.effect === 'speed') {
+    if (state.activeBoosterEffect.effect === 'speed') {
       state.speed = state.baseSpeed;
     }
-    if (state.booster.effect === 'shield') {
+    if (state.activeBoosterEffect.effect === 'shield') {
       state.shieldActive = false;
     }
     
     // Schedule next booster spawn 10 seconds after effect ends
     state.nextBoosterSpawnTime = now + BOOSTER_RESPAWN_TIME;
     
-    state.booster = null;
-    console.log('Booster expired');
+    state.activeBoosterEffect = null;
+    console.log('Booster effect expired');
   }
 }
 

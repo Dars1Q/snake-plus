@@ -36,7 +36,7 @@ function updateUI(state) {
   }
 
   // Create/update booster display
-  if (state.booster) {
+  if (state.activeBoosterEffect) {
     if (!boosterEl) {
       boosterEl = document.createElement('div');
       boosterEl.id = 'booster-display';
@@ -62,9 +62,9 @@ function updateUI(state) {
   scoreEl.innerHTML = '<b>📊 Score</b><br><span style="color:#2ecc40; font-size:1.2rem;">' + (state.score || 0) + '</span>';
   starsEl.innerHTML = '<b>⭐ Stars</b><br><span style="color:#2ecc40; font-size:1.2rem;">' + Math.floor(state.stars || 0) + '</span>';
   
-  if (boosterEl && state.booster) {
-    const remaining = Math.max(0, (state.booster.endTime - performance.now()) / 1000).toFixed(1);
-    boosterEl.innerHTML = '<b style="color:' + state.booster.color + ';">' + state.booster.icon + ' ' + state.booster.name + '</b><br><span style="color:#fff; font-size:1rem;">' + remaining + 's</span>';
+  if (boosterEl && state.activeBoosterEffect) {
+    const remaining = Math.max(0, (state.activeBoosterEffect.endTime - performance.now()) / 1000).toFixed(1);
+    boosterEl.innerHTML = '<b style="color:' + state.activeBoosterEffect.color + ';">' + state.activeBoosterEffect.icon + ' ' + state.activeBoosterEffect.name + '</b><br><span style="color:#fff; font-size:1rem;">' + remaining + 's</span>';
   }
   
   if (comboEl) {

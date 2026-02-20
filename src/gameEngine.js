@@ -154,7 +154,7 @@ function gameLoop(now) {
           gameInterval = requestAnimationFrame(particleLoop);
         } else {
           // Update game stats and check achievements
-          updateGameStats(gameState.score, gameState.comboMultiplier, gameState.booster ? gameState.booster.id : null);
+          updateGameStats(gameState.score, gameState.comboMultiplier, gameState.activeBoosterEffect ? gameState.activeBoosterEffect.id : null);
 
           // Check and unlock achievements
           const newAchievements = checkAchievements();
