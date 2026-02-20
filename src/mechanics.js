@@ -2,9 +2,9 @@
 // Game logic, mechanics, and balance
 
 const GRID_SIZE = 20;
-const BASE_SPEED = 5; // cells/sec
+const BASE_SPEED = 4; // cells/sec (slower start)
 const SPEED_INCREASE_FOOD = 8; // eat 8 foods to speed up
-const COMBO_WINDOW = 3500; // ms
+const COMBO_WINDOW = 4500; // ms (longer combo window)
 const BONUS_FOOD_CHANCE = 0.12;
 const ICE_TILE_CHANCE = 0.02;
 const ICE_RESPAWN_DELAY = 4000;

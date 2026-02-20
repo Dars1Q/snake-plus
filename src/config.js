@@ -5,9 +5,9 @@ const CONFIG = {
 
   // Game settings
   GRID_SIZE: 20,
-  BASE_SPEED: 5, // cells/sec
-  SPEED_INCREASE_FOOD: 8, // eat 8 foods to speed up (was 5)
-  COMBO_WINDOW: 3500, // ms (was 2500, +1 sec)
+  BASE_SPEED: 4, // cells/sec (slower start)
+  SPEED_INCREASE_FOOD: 8, // eat 8 foods to speed up
+  COMBO_WINDOW: 4500, // ms (longer combo window)
   BONUS_FOOD_CHANCE: 0.12,
   ICE_TILE_CHANCE: 0.02,
   ICE_RESPAWN_DELAY: 4000,
