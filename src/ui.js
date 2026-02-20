@@ -502,20 +502,19 @@ window.addEventListener('skinsUpdated', function(ev) {
 
 async function showGameOver(score, restartCallback, newAchievements = []) {
   const ui = document.getElementById('ui');
-  const scores = await updateLeaderboard(score);
-  const place = Array.isArray(scores) && scores.length > 0 ? (scores.indexOf(score) + 1) : 1;
   const lang = translations[currentLanguage];
   const rank = getRank(score);
 
   // Prepare share text
   const shareText = `🐍 Snake+\\n🏆 Score: ${score}\\n🏅 Rank: ${rank.name}\\n#SnakePlus`;
 
+  // FIRST: Create UI with all elements
   ui.innerHTML = `
     <h2 style="animation: gameOverPulse 1.5s ease-in-out infinite;">💀 ${lang.gameOver}</h2>
     <div style="width:100%; max-width:380px; background:linear-gradient(135deg, #0f1419 0%, #141618 100%); border:1px solid #e74c3c; border-radius:10px; padding:20px; margin:16px 0; text-align:center; box-shadow:0 4px 20px rgba(231, 76, 60, 0.3); animation: slideIn 0.4s ease-out; color: #fff;">
       <div style="margin:10px 0; font-size:1.1rem; color: #fff;">${lang.score}: <b style="color:#2ecc40; font-size:1.4rem; text-shadow:0 0 10px rgba(46,204,64,0.5);">${score}</b></div>
       <div style="margin:10px 0; font-size:1rem; color: #fff;">🏅 ${rank.name}</div>
-      <div style="margin:10px 0; font-size:1rem; color: #fff;">${lang.place}: <b style="color:#ffe066; text-shadow:0 0 10px rgba(255,224,102,0.5);">#${place > 0 ? place : '?'}</b></div>
+      <div style="margin:10px 0; font-size:1rem; color: #fff;">${lang.place}: <b style="color:#ffe066; text-shadow:0 0 10px rgba(255,224,102,0.5);">#1</b></div>
     </div>
 
     ${newAchievements.length > 0 ? `
@@ -546,6 +545,14 @@ async function showGameOver(score, restartCallback, newAchievements = []) {
     <div id="leaderboard" style="margin-top:16px; width:100%; max-width:380px; animation: slideIn 0.7s ease-out;"></div>
   `;
 
+  // NOW: Update leaderboard (element exists now)
+  const scores = await updateLeaderboard(score);
+  const place = Array.isArray(scores) && scores.length > 0 ? (scores.indexOf(score) + 1) : 1;
+  
+  // Update place in UI
+  const placeEl = ui.querySelector('.game-over-stats b:last-child') || ui.querySelectorAll('b')[2];
+  if (placeEl) placeEl.textContent = '#' + (place > 0 ? place : '?');
+
   renderSkins();
   document.getElementById('restart-btn').onclick = restartCallback;
   document.getElementById('menu-btn').onclick = () => showStartScreen(true, restartCallback);
@@ -563,8 +570,6 @@ async function showGameOver(score, restartCallback, newAchievements = []) {
       copyToClipboard(shareMessage);
     };
   }
-
-  // Leaderboard already rendered in first updateLeaderboard call
 }
 
 // Helper function to copy to clipboard with visual feedback
