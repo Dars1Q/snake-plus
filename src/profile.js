@@ -1,6 +1,6 @@
 // profile.js - Player Profile UI
 import { getRank, getPlayerStats } from './mechanics.js';
-import { getUserData, getUserScores } from './api.js';
+import { getUserData } from './api.js';
 import { ONLINE_MODE } from './config.js';
 
 const translations = {
