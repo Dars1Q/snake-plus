@@ -163,9 +163,20 @@ function gameLoop(now) {
           // Check and unlock achievements
           const newAchievements = checkAchievements();
 
-          // Save score locally only (server disabled)
-          console.log('Score saved locally:', gameState.score);
+          // Save stars locally
           localStorage.setItem('snakeplus_stars', String(Math.floor(gameState.stars)));
+
+          // Save score to Firebase
+          if (window.db) {
+            import('./api.js').then(({ saveScore }) => {
+              const rank = getRank(gameState.score);
+              const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || null;
+              saveScore(gameState.score, rank.name, tgUser).then(r => {
+                if (r.success) console.log('✅ Score saved to Firebase:', gameState.score);
+                else console.log('❌ Firebase save failed:', r.error);
+              });
+            });
+          }
 
           // Pass new achievements to showGameOver
           showGameOver(gameState.score, startGame, newAchievements).catch(err => console.error('showGameOver error:', err));
