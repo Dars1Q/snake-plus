@@ -30,6 +30,32 @@
     window.firebase = firebase;
     window.db = firebase.firestore();
     console.log('✅ Firebase initialized');
+    
+    // Global saveScore function for gameEngine
+    window.saveScoreToFirebase = async function(score, rank, telegramUser) {
+      if (!window.db) return { success: false, error: 'Firebase not ready' };
+      
+      try {
+        const userId = telegramUser?.id || 'anonymous';
+        const username = telegramUser?.username || telegramUser?.first_name || 'Player';
+        
+        await window.db.collection('scores').add({
+          userId: String(userId),
+          username: username,
+          score: score,
+          rank: rank,
+          telegram_user: telegramUser ? JSON.stringify(telegramUser) : null,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          language: localStorage.getItem('snakeplus_language') || 'en'
+        });
+        
+        console.log('✅ Score saved to Firebase:', score);
+        return { success: true };
+      } catch (error) {
+        console.error('❌ Firebase save error:', error);
+        return { success: false, error: error.message };
+      }
+    };
   </script>
   
   <link rel="stylesheet" href="styles.css" id="css-link" />

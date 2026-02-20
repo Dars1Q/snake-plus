@@ -166,16 +166,11 @@ function gameLoop(now) {
           // Save stars locally
           localStorage.setItem('snakeplus_stars', String(Math.floor(gameState.stars)));
 
-          // Save score to Firebase
-          if (window.db) {
-            import('./api.js').then(({ saveScore }) => {
-              const rank = getRank(gameState.score);
-              const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || null;
-              saveScore(gameState.score, rank.name, tgUser).then(r => {
-                if (r.success) console.log('✅ Score saved to Firebase:', gameState.score);
-                else console.log('❌ Firebase save failed:', r.error);
-              });
-            });
+          // Save score to Firebase (using global function)
+          if (window.saveScoreToFirebase) {
+            const rank = getRank(gameState.score);
+            const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user || null;
+            window.saveScoreToFirebase(gameState.score, rank.name, tgUser);
           }
 
           // Pass new achievements to showGameOver
