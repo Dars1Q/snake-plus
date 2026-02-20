@@ -187,7 +187,7 @@ function renderProfileContent(stats, skins, lang) {
             `;
           }).join('')
         : `<div style="text-align:center; color:#666; padding:20px;">${lang.noData}</div>`
-    }
+      }
     </div>
   `;
 }
