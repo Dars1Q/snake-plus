@@ -216,8 +216,8 @@ function updateMechanics(state) {
   state.lastEventIceBreak = false;
 
   // Check if on ice tile (apply 2x speed for 2 seconds)
-  const head = state.snake[0];
-  const onIce = state.iceTiles.some(tile => tile.x === head[0] && tile.y === head[1]);
+  const currentHead = state.snake[0];
+  const onIce = state.iceTiles.some(tile => tile.x === currentHead[0] && tile.y === currentHead[1]);
   
   if (onIce && !state.onIce) {
     // Just stepped on ice - apply speed boost
