@@ -316,12 +316,47 @@ function setupStartScreenButtons(startCallback) {
   const ratingBtn = document.getElementById('rating-btn');
   if (ratingBtn) {
     ratingBtn.type = 'button';
-    ratingBtn.addEventListener('click', (e) => {
+    ratingBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       document.getElementById('shop-panel').style.display = 'none';
       document.getElementById('settings-panel').style.display = 'none';
       document.getElementById('leaderboard').style.display = 'block';
-      updateLeaderboard(undefined, true); // showGlobal = true
+      
+      // Show GLOBAL leaderboard
+      const lb = document.getElementById('leaderboard');
+      const lang = translations[currentLanguage];
+      
+      lb.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">⏳ Loading...</div>';
+      
+      try {
+        const serverAvailable = await isServerAvailable();
+        if (serverAvailable) {
+          const result = await getLeaderboard(50);
+          if (result.success && result.leaderboard && result.leaderboard.length > 0) {
+            let html = '<h4 style="margin:0 0 12px 0; text-align:center; color: var(--accent-color);">🏆 Global Leaderboard</h4>';
+            html += result.leaderboard.map(function(entry, i) {
+              const medal = i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : '#' + (i+1)));
+              const rank = getRank(entry.score);
+              let displayName = entry.username || 'Anonymous';
+              if (entry.telegram_user) {
+                try {
+                  const tgUser = JSON.parse(entry.telegram_user);
+                  displayName = tgUser.username || tgUser.first_name || displayName;
+                } catch(e) {}
+              }
+              return '<div style="padding:12px; background:var(--bg-tertiary); border-radius:8px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;"><div style="display:flex; align-items:center; gap:12px;"><span style="font-size:1.2rem; min-width:30px;">' + medal + '</span><div><div style="color:#fff; font-weight:bold;">' + displayName + '</div><div style="color:' + rank.color + '; font-size:0.75rem;">' + rank.name + '</div></div></div><span style="color:var(--accent-color); font-weight:bold; font-size:1.1rem;">' + entry.score + '</span></div>';
+            }).join('');
+            lb.innerHTML = html;
+          } else {
+            lb.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">No leaderboard data</div>';
+          }
+        } else {
+          lb.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">Server offline</div>';
+        }
+      } catch (err) {
+        console.error('Leaderboard error:', err);
+        lb.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">Error loading leaderboard</div>';
+      }
     });
   }
   

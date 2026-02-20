@@ -607,19 +607,20 @@ function updateGameStats(score, combo, boosterUsed) {
     stats.boostersUsed.push(boosterUsed);
   }
 
-  // Update total games and score
-  stats.totalGames++;
+  // Update total games (only once per game session)
+  // Check if we already counted this game
+  const lastGameTime = localStorage.getItem('snakeplus_last_game_time');
+  const now = Date.now();
+  if (!lastGameTime || (now - parseInt(lastGameTime)) > 60000) {
+    // More than 1 minute since last game - count this one
+    stats.totalGames++;
+    localStorage.setItem('snakeplus_last_game_time', String(now));
+  }
+
+  // Update total score
   stats.totalScore = (stats.totalScore || 0) + score;
 
   savePlayerStats(stats);
-  
-  // Also save to server for cross-device sync (if available)
-  try {
-    // Import dynamically to avoid circular dependency
-    import('./api.js').then(({ savePlayerStatsToServer }) => {
-      savePlayerStatsToServer(stats).catch(() => {});
-    });
-  } catch(e) {}
 }
 
 function incrementGamesPlayed() {
