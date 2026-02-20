@@ -96,4 +96,32 @@ export async function isServerAvailable() {
   return window.db !== null;
 }
 
+// Buy skin (local only - no server needed)
+export async function buySkin(skinColor, skinName, price) {
+  // This is handled locally in mechanics.js
+  return { success: true, message: 'Skin purchased locally' };
+}
+
+// Get user's skins (local only)
+export async function getUserSkins() {
+  const skins = JSON.parse(localStorage.getItem('snakeplus_skins') || '["#2ecc40"]');
+  return { success: true, skins: skins.map(color => ({ skin_color: color })) };
+}
+
+// Get user data (local only)
+export async function getUserData() {
+  const stars = localStorage.getItem('snakeplus_stars') || '0';
+  const skins = JSON.parse(localStorage.getItem('snakeplus_skins') || '["#2ecc40"]');
+  const scores = JSON.parse(localStorage.getItem('snakeplus_scores') || '[]');
+  return {
+    success: true,
+    user: {
+      userId: getUserId(),
+      stars: parseInt(stars),
+      skins: skins,
+      bestScore: scores.length > 0 ? scores[0] : 0
+    }
+  };
+}
+
 export { getUserId, getUsername };
